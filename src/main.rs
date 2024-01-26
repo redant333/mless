@@ -3,6 +3,7 @@ mod render;
 
 use clap::Parser;
 use configuration::Config;
+use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{cursor, terminal};
 use crossterm::{
     event::{read, Event, KeyCode},
@@ -35,8 +36,14 @@ fn main() {
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
 
-    renderer.output.queue(cursor::Hide).unwrap();
+    renderer
+        .output
+        .queue(cursor::Hide)
+        .unwrap()
+        .queue(EnterAlternateScreen)
+        .unwrap();
     enable_raw_mode().unwrap();
+
     loop {
         renderer.render(&input);
 
@@ -49,6 +56,12 @@ fn main() {
             }
         }
     }
-    renderer.output.queue(cursor::Show).unwrap();
+
+    renderer
+        .output
+        .queue(LeaveAlternateScreen)
+        .unwrap()
+        .queue(cursor::Show)
+        .unwrap();
     disable_raw_mode().unwrap();
 }
