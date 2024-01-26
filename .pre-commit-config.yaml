@@ -11,3 +11,12 @@ repos:
         language: system
         entry: cargo fmt --
         files: \.rs$
+      - id: cargo-clippy
+        name: clippy
+        language: system
+        # At the time of writing, it does not seem possible to run clippy
+        # with one specific file. This is a workaround that runs clippy on
+        # all the files in a subshell. Shouldn't be a problem since the
+        # whole project should be kept linted at all times.
+        entry: sh -c "cargo clippy -- -Dwarnings"
+        files: \.rs$
