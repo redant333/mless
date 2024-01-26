@@ -22,7 +22,9 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let _config = Config {};
+    let _config = Config {
+        ..Default::default()
+    };
 
     let (cols, rows) = terminal::size().unwrap();
     let mut renderer = Renderer {
