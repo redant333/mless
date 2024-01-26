@@ -1,5 +1,8 @@
+mod configuration;
 mod render;
+
 use clap::Parser;
+use configuration::Config;
 use crossterm::{cursor, terminal};
 use crossterm::{
     event::{read, Event, KeyCode},
@@ -15,6 +18,8 @@ struct Args {}
 
 fn main() {
     let _args = Args::parse();
+    let _config = Config {};
+
     let (cols, rows) = terminal::size().unwrap();
     let mut renderer = Renderer {
         output: io::stdout(),
