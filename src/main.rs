@@ -22,10 +22,8 @@ fn main() {
         cols,
     };
 
-    let mut input = "This is some dummy text.
-And here is some more.
-Even more."
-        .to_string();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
 
     renderer.output.queue(cursor::Hide).unwrap();
     enable_raw_mode().unwrap();
