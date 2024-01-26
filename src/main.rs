@@ -14,10 +14,13 @@ use std::io;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
-struct Args {}
+struct Args {
+    /// File to select the text from. Omit to use standard input
+    file: Option<std::path::PathBuf>,
+}
 
 fn main() {
-    let _args = Args::parse();
+    let args = Args::parse();
     let _config = Config {};
 
     let (cols, rows) = terminal::size().unwrap();
@@ -27,8 +30,10 @@ fn main() {
         cols,
     };
 
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
+    let mut input = match args.file {
+        Some(path) => std::fs::read_to_string(path).unwrap(),
+        None => io::stdin().lines().map(|line| line.unwrap()).collect(),
+    };
 
     renderer.output.queue(cursor::Hide).unwrap();
     enable_raw_mode().unwrap();
