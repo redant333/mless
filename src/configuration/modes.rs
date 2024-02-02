@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Mode {
     pub hotkey: char,
     pub description: String,
@@ -8,14 +8,14 @@ pub struct Mode {
     pub args: ModeArgs,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "mode")]
 pub enum ModeArgs {
     #[serde(rename = "regex")]
     RegexMode(RegexArgs),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RegexArgs {
     pub regexes: Vec<String>,
 }
