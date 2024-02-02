@@ -3,7 +3,10 @@ use std::io::Write;
 use crossterm::{
     cursor,
     style::Print,
-    terminal::{Clear, ClearType},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
     QueueableCommand,
 };
 
@@ -26,5 +29,23 @@ impl<T: Write + ?Sized> Renderer<T> {
             });
 
         self.output.flush().unwrap();
+    }
+
+    pub fn initialize_terminal(&mut self) -> std::io::Result<()> {
+        self.output
+            .queue(cursor::Hide)?
+            .queue(EnterAlternateScreen)?;
+        enable_raw_mode()?;
+
+        Ok(())
+    }
+
+    pub fn uninitialize_terminal(&mut self) -> std::io::Result<()> {
+        self.output
+            .queue(cursor::Show)?
+            .queue(LeaveAlternateScreen)?;
+        disable_raw_mode()?;
+
+        Ok(())
     }
 }

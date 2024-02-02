@@ -4,16 +4,12 @@ mod render;
 
 use clap::Parser;
 use configuration::Config;
-use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
-use crossterm::{cursor, terminal};
-use crossterm::{
-    event::read,
-    terminal::{disable_raw_mode, enable_raw_mode},
-    QueueableCommand,
-};
+use crossterm::event::read;
+use crossterm::terminal;
 use input_handling::{Action, InputHandler};
 use render::Renderer;
 use std::io;
+use std::process::exit;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -21,6 +17,9 @@ struct Args {
     /// File to select the text from. Omit to use standard input
     file: Option<std::path::PathBuf>,
 }
+
+const EXIT_ERROR: i32 = -1;
+const EXIT_SUCCESS: i32 = 0;
 
 fn main() {
     let args = Args::parse();
@@ -41,13 +40,18 @@ fn main() {
         cols,
     };
 
-    renderer
-        .output
-        .queue(cursor::Hide)
-        .unwrap()
-        .queue(EnterAlternateScreen)
-        .unwrap();
-    enable_raw_mode().unwrap();
+    renderer.initialize_terminal().unwrap_or_else(|error| {
+        eprintln!("Could not initialize the terminal: {}", error);
+        // Do a best effort to reset the terminal
+        renderer.uninitialize_terminal().unwrap_or_else(|error| {
+            eprintln!(
+                "Could not recover the terminal after failed initialization: {}",
+                error
+            );
+            eprintln!("Your terminal might start behaving incorrectly");
+        });
+        exit(EXIT_ERROR);
+    });
 
     loop {
         renderer.render(&input_text);
@@ -65,11 +69,11 @@ fn main() {
         };
     }
 
-    renderer
-        .output
-        .queue(LeaveAlternateScreen)
-        .unwrap()
-        .queue(cursor::Show)
-        .unwrap();
-    disable_raw_mode().unwrap();
+    renderer.uninitialize_terminal().unwrap_or_else(|error| {
+        eprintln!("Could not uninitialize the terminal: {}", error);
+        eprintln!("Your terminal might start behaving incorrectly");
+        exit(EXIT_ERROR);
+    });
+
+    exit(EXIT_SUCCESS);
 }
