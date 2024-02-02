@@ -1,4 +1,5 @@
 mod configuration;
+mod input_handling;
 mod render;
 
 use clap::Parser;
@@ -6,10 +7,11 @@ use configuration::Config;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{cursor, terminal};
 use crossterm::{
-    event::{read, Event, KeyCode},
+    event::read,
     terminal::{disable_raw_mode, enable_raw_mode},
     QueueableCommand,
 };
+use input_handling::{Action, InputHandler};
 use render::Renderer;
 use std::io;
 
@@ -22,8 +24,14 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let _config = Config {
+    let config = Config {
         ..Default::default()
+    };
+
+    let input_handler = InputHandler::from_config(&config);
+    let input_text = match args.file {
+        Some(path) => std::fs::read_to_string(path).unwrap(),
+        None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
 
     let (cols, rows) = terminal::size().unwrap();
@@ -31,11 +39,6 @@ fn main() {
         output: io::stdout(),
         rows,
         cols,
-    };
-
-    let mut input = match args.file {
-        Some(path) => std::fs::read_to_string(path).unwrap(),
-        None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
 
     renderer
@@ -47,16 +50,19 @@ fn main() {
     enable_raw_mode().unwrap();
 
     loop {
-        renderer.render(&input);
+        renderer.render(&input_text);
 
-        if let Event::Key(event) = read().unwrap() {
-            if let KeyCode::Char(c) = event.code {
-                match c {
-                    'q' => break,
-                    _ => input.push(c),
-                }
-            }
-        }
+        let action = match read() {
+            Ok(event) => input_handler.get_action(event),
+            _ => None,
+        };
+
+        // Will eventually contain matching for all different actions
+        #[allow(clippy::single_match)]
+        match action {
+            Some(Action::Exit) => break,
+            _ => (),
+        };
     }
 
     renderer
