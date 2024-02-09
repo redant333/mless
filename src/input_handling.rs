@@ -4,8 +4,13 @@ use crate::configuration::Config;
 
 pub struct InputHandler {}
 
+pub struct KeyPress {
+    pub key: char,
+}
+
 pub enum Action {
     Exit,
+    ForwardKeyPress(KeyPress),
 }
 
 const KEYBINDING_EXIT: char = 'q';
@@ -28,6 +33,10 @@ impl InputHandler {
                 code: KeyCode::Char(KEYBINDING_EXIT),
                 ..
             } => Some(Action::Exit),
+            KeyEvent {
+                code: KeyCode::Char(key),
+                ..
+            } => Some(Action::ForwardKeyPress(KeyPress { key })),
             _ => None,
         }
     }
