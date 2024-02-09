@@ -1,12 +1,12 @@
 mod configuration;
-mod input_handling;
+mod input_handler;
 mod render;
 
 use clap::Parser;
 use configuration::Config;
 use crossterm::event::read;
 use crossterm::terminal;
-use input_handling::{Action, InputHandler};
+use input_handler::{Action, InputHandler};
 use render::Renderer;
 use std::io;
 use std::process::exit;
