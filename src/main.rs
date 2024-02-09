@@ -1,5 +1,6 @@
 mod configuration;
 mod input_handler;
+mod modes;
 mod renderer;
 
 use clap::Parser;

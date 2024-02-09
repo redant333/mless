@@ -10,6 +10,10 @@ use crossterm::{
     QueueableCommand,
 };
 
+pub enum Draw {
+    Data,
+}
+
 pub struct Renderer<T: Write + ?Sized> {
     pub rows: u16,
     pub cols: u16,
