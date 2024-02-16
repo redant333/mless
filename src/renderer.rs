@@ -10,11 +10,13 @@ use crossterm::{
     QueueableCommand,
 };
 
+#[derive(Debug)]
 pub struct TextStyle {
     pub foreground: Color,
     pub background: Color,
 }
 
+#[derive(Debug)]
 pub enum Draw {
     Data,
     TextRelativeToData {
