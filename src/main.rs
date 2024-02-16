@@ -43,7 +43,6 @@ fn main() {
     let mut renderer = Renderer {
         output: io::stdout(),
     };
-    let mut current_mode = RegexMode {};
 
     // TODO Handle the situation where there is no given file name
     // and no stdin pipe.
@@ -57,6 +56,8 @@ fn main() {
         Some(path) => std::fs::read_to_string(path).unwrap(),
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
+
+    let mut current_mode = RegexMode::new(&input_text, &["[a-z]{5,}".to_string()]);
 
     renderer.initialize_terminal().unwrap_or_else(|error| {
         eprintln!("Could not initialize the terminal: {}", error);
