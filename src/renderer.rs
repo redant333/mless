@@ -94,11 +94,48 @@ impl<T: Write + ?Sized> Renderer<T> {
 }
 
 fn data_location_to_screen_location(
-    _data: &str,
+    data: &str,
     _rows: u16,
     _cols: u16,
-    _location: usize,
+    location: usize,
 ) -> (u16, u16) {
-    // TODO Implement this
-    (0, 0)
+    // TODO This function assumes that each line will be smaller
+    // or equal to screen width. Take into account that the line
+    // can overflow.
+    let (row, row_start) = data[..=location].chars().enumerate().fold(
+        (0, 0),
+        |(row, row_start), (char_index, char)| {
+            if char == '\n' {
+                (row + 1, char_index + 1)
+            } else {
+                (row, row_start)
+            }
+        },
+    );
+
+    let col = location - row_start;
+    (row, col as u16)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case("test", 10, 10, 0, (0, 0))]
+    #[test_case("test", 10, 10, 1, (0, 1))]
+    #[test_case("test\nmore test", 10, 10, 5, (1, 0))]
+    #[test_case("test\nmore test", 10, 10, 10, (1, 5))]
+    #[test_case("\n\ntest", 10, 10, 3, (2, 1))]
+    fn data_location_to_screen_location_returns_expected_values(
+        data: &str,
+        rows: u16,
+        cols: u16,
+        location: usize,
+        expected: (u16, u16),
+    ) {
+        let location = data_location_to_screen_location(data, rows, cols, location);
+
+        assert_eq!(location, expected);
+    }
 }
