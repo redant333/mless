@@ -39,7 +39,7 @@ impl<T: Write + ?Sized> Renderer<T> {
                     text,
                     location,
                     style,
-                } => self.draw_text_relative_to_data(text, *location, style),
+                } => self.draw_text_relative_to_data(text, data, *location, style),
             }
         }
 
@@ -60,9 +60,15 @@ impl<T: Write + ?Sized> Renderer<T> {
             });
     }
 
-    fn draw_text_relative_to_data(&mut self, text: &str, location: usize, style: &TextStyle) {
+    fn draw_text_relative_to_data(
+        &mut self,
+        text: &str,
+        data: &str,
+        location: usize,
+        style: &TextStyle,
+    ) {
         let (cols, rows) = terminal::size().unwrap();
-        let (row, col) = data_location_to_screen_location(text, rows, cols, location);
+        let (row, col) = data_location_to_screen_location(data, rows, cols, location);
 
         self.output.queue(cursor::MoveTo(col, row)).unwrap();
         self.output
