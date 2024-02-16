@@ -12,6 +12,13 @@ use renderer::Renderer;
 use std::io;
 use std::process::exit;
 
+// TODO Replace all panics, unwraps and similar with something
+// that will not crash the program. It is important not to crash
+// in order to uninitialize the terminal and leave it in a good
+// state.
+
+// TODO Add documentation once the design is clear
+
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 struct Args {
@@ -24,6 +31,10 @@ const EXIT_SUCCESS: i32 = 0;
 
 fn main() {
     let args = Args::parse();
+    // TODO Validate the configuration before continuing.
+    // It is possible that some things will be validated automatically,
+    // due to used types, but at least some things need to be validated
+    // manually.
     let config = Config {
         ..Default::default()
     };
@@ -34,6 +45,14 @@ fn main() {
     };
     let mut current_mode = RegexMode {};
 
+    // TODO Handle the situation where there is no given file name
+    // and no stdin pipe.
+    // Steps:
+    // - Run `cargo run` without any arguments
+    // Expected:
+    // - Similar to how less works, "Missing filename message" or similar
+    // Actual:
+    // - Waits for stdin, Ctrl+D makes it display the rendered terminal
     let input_text = match args.file {
         Some(path) => std::fs::read_to_string(path).unwrap(),
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
