@@ -44,14 +44,6 @@ fn main() {
         output: io::stdout(),
     };
 
-    // TODO Handle the situation where there is no given file name
-    // and no stdin pipe.
-    // Steps:
-    // - Run `cargo run` without any arguments
-    // Expected:
-    // - Similar to how less works, "Missing filename message" or similar
-    // Actual:
-    // - Waits for stdin, Ctrl+D makes it display the rendered terminal
     let input_text = match args.file {
         Some(path) => std::fs::read_to_string(path).unwrap(),
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
