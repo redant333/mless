@@ -8,14 +8,16 @@ use crate::{
     renderer::{Draw, TextStyle},
 };
 
-use super::{Mode, ModeAction};
+use super::{Mode, ModeEvent};
 
 struct Hit {
     location: usize,
+    text: String,
 }
 
 pub struct RegexMode {
     hint_hit_map: HashMap<String, Hit>,
+    input_buffer: String,
 }
 
 // TODO Make sure that the configuration for RegexMode is
@@ -38,18 +40,29 @@ impl RegexMode {
                     hint.to_string(),
                     Hit {
                         location: regex_match.start(),
+                        text: regex_match.as_str().to_string(),
                     },
                 );
             }
         }
 
-        Self { hint_hit_map }
+        Self {
+            hint_hit_map,
+            input_buffer: String::new(),
+        }
     }
 }
 
 impl Mode for RegexMode {
-    fn handle_key_press(&mut self, _key: KeyPress) -> Option<ModeAction> {
-        None
+    fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeEvent> {
+        self.input_buffer.push(key.key);
+
+        if let Some(hit) = self.hint_hit_map.get(&self.input_buffer) {
+            self.input_buffer.clear();
+            Some(ModeEvent::TextSelected(hit.text.clone()))
+        } else {
+            None
+        }
     }
 
     fn get_draw_instructions(&self) -> Vec<Draw> {

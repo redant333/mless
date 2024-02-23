@@ -4,8 +4,10 @@ mod regex;
 pub use regex::RegexMode;
 
 pub trait Mode {
-    fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeAction>;
+    fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeEvent>;
     fn get_draw_instructions(&self) -> Vec<Draw>;
 }
 
-pub enum ModeAction {}
+pub enum ModeEvent {
+    TextSelected(String),
+}

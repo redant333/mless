@@ -7,7 +7,7 @@ use clap::Parser;
 use configuration::Config;
 use crossterm::event::read;
 use input_handler::{Action, InputHandler};
-use modes::{Mode, RegexMode};
+use modes::{Mode, ModeEvent, RegexMode};
 use renderer::Renderer;
 use std::io;
 use std::process::exit;
@@ -72,6 +72,7 @@ fn main() {
         exit(EXIT_ERROR);
     });
 
+    let mut return_text = String::new();
     loop {
         let draw_instructions = current_mode.get_draw_instructions();
         renderer.render(&input_text, &draw_instructions);
@@ -81,11 +82,21 @@ fn main() {
             _ => None,
         };
 
-        let _mode_action = match action {
+        let mode_action = match action {
             Some(Action::Exit) => break,
             Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
             None => None,
         };
+
+        // The enum will get more variants, so make it a match from the start
+        #[allow(clippy::single_match)]
+        match mode_action {
+            Some(ModeEvent::TextSelected(text)) => {
+                return_text = text;
+                break;
+            }
+            None => (),
+        }
     }
 
     renderer.uninitialize_terminal().unwrap_or_else(|error| {
@@ -93,6 +104,8 @@ fn main() {
         eprintln!("Your terminal might start behaving incorrectly");
         exit(EXIT_ERROR);
     });
+
+    print!("{}", return_text);
 
     exit(EXIT_SUCCESS);
 }
