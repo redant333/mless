@@ -40,7 +40,7 @@ impl Config {
             hotkey: 'w',
             description: "Select words separated by space".to_string(),
             args: modes::ModeArgs::RegexMode(modes::RegexArgs {
-                regexes: vec![r#"[^ ]+"#.to_string()],
+                regexes: vec![r"[a-zA-Z]{5,}".to_string()],
             }),
         }]
     }

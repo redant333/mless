@@ -12,6 +12,8 @@ use renderer::Renderer;
 use std::io;
 use std::process::exit;
 
+use crate::configuration::ModeArgs;
+
 // TODO Replace all panics, unwraps and similar with something
 // that will not crash the program. It is important not to crash
 // in order to uninitialize the terminal and leave it in a good
@@ -55,7 +57,8 @@ fn main() {
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
 
-    let mut current_mode = RegexMode::new(&input_text, &["[a-z]{5,}".to_string()]);
+    let ModeArgs::RegexMode(args) = &config.modes[0].args;
+    let mut current_mode = RegexMode::new(&input_text, args);
 
     renderer.initialize_terminal().unwrap_or_else(|error| {
         eprintln!("Could not initialize the terminal: {}", error);

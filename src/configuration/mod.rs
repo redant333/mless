@@ -3,3 +3,5 @@ mod config;
 pub use config::Config;
 
 mod modes;
+pub use modes::ModeArgs;
+pub use modes::RegexArgs;

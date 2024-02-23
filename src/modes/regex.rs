@@ -8,6 +8,7 @@ use crossterm::style::Color;
 use regex::Regex;
 
 use crate::{
+    configuration,
     input_handler::KeyPress,
     renderer::{Draw, TextStyle},
 };
@@ -40,17 +41,14 @@ pub struct RegexMode {
     input_buffer: String,
 }
 
-// TODO Make sure that the configuration for RegexMode is
-// read from config arguments
-
 impl RegexMode {
-    /// Create a new regex mode for selecting from the given data with the given regexes.
-    pub fn new(data: &str, regexes: &[String]) -> Self {
+    /// Create a new regex mode for selecting from the given data with the given args.
+    pub fn new(data: &str, args: &configuration::RegexArgs) -> Self {
         // TODO Implement a more reasonable way of choosing hints
         let mut hint_pool = "asdfghjkl;qwertyuiopzxcvbnm".chars().cycle();
         let mut hint_hit_map = HashMap::new();
 
-        for regex in regexes {
+        for regex in &args.regexes {
             let regex = Regex::new(regex).unwrap();
             let matches = regex.find_iter(data);
 
@@ -105,14 +103,18 @@ impl Mode for RegexMode {
 
 #[cfg(test)]
 mod tests {
+    use crate::configuration::RegexArgs;
+
     use super::*;
 
     #[test]
     fn produces_instructions_at_expected_locations() {
         let text = "things and stuff";
-        let regexes = [r"[a-z]{4,}".to_string()];
+        let args = RegexArgs {
+            regexes: vec![r"[a-z]{4,}".to_string()],
+        };
 
-        let mode = RegexMode::new(text, &regexes);
+        let mode = RegexMode::new(text, &args);
         let hits: Vec<usize> = mode
             .get_draw_instructions()
             .into_iter()
