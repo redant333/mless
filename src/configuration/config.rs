@@ -1,10 +1,22 @@
 use super::modes;
 use serde::{Deserialize, Serialize};
 
+/// The main configuration struct representing the whole configuration
+/// file.
+///
+/// All of its fields have default values to enable starting without
+/// any config specified and to enable config files to override only
+/// some of the fields.
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
+    /// Characters that can be used by structs implementing [modes::Mode]
+    /// trait.
     #[serde(default = "Config::default_hint_characters")]
     pub hint_characters: String,
+    /// List of modes that the user can use.
+    ///
+    /// Note that it is possible to have multiple instances of the same
+    /// mode with different arguments. See [modes::Mode]
     #[serde(default = "Config::default_modes")]
     pub modes: Vec<modes::Mode>,
 }

@@ -17,12 +17,10 @@ use std::process::exit;
 // in order to uninitialize the terminal and leave it in a good
 // state.
 
-// TODO Add documentation once the design is clear
-
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 struct Args {
-    /// File to select the text from. Omit to use standard input
+    /// File to select the text from. Omit to use standard input.
     file: Option<std::path::PathBuf>,
 }
 

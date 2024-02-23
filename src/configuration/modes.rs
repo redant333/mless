@@ -1,13 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+/// Structure describing a mode instance in the configuration file.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Mode {
+    /// The hotkey that is used to enter the mode.
     pub hotkey: char,
+    /// Description of the mode.
+    ///
+    /// This is only used in situations when more information needs to
+    /// be presented about the mode instance.
     pub description: String,
+    /// Mode specific arguments that define this mode.
     #[serde(flatten)]
     pub args: ModeArgs,
 }
 
+/// Arguments that specify the details of the mode.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "mode")]
 pub enum ModeArgs {
@@ -15,8 +23,10 @@ pub enum ModeArgs {
     RegexMode(RegexArgs),
 }
 
+/// Arguments for [crate::modes::RegexMode].
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RegexArgs {
+    /// The list of regexes that the mode will use for selections.
     pub regexes: Vec<String>,
 }
 

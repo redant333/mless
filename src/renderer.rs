@@ -1,3 +1,4 @@
+//! Rendering to the terminal.
 use std::io::Write;
 
 use crossterm::{
@@ -10,27 +11,50 @@ use crossterm::{
     QueueableCommand,
 };
 
+/// Struct to describe text style.
+///
+/// Used in [Draw].
 #[derive(Debug)]
 pub struct TextStyle {
     pub foreground: Color,
     pub background: Color,
 }
 
+/// Instruction to [Renderer] about what should be drawn to the screen.
 #[derive(Debug)]
 pub enum Draw {
+    /// Draw the data, i.e. the text from which the selection is performed.
     Data,
+    /// Draw the provided text at a location relative to the data.
+    ///
+    /// Being relative to data and not screen coordinates, allows the [Renderer]
+    /// to draw the text over a certain word regardless of the screen size.
+    ///
+    /// For example, for the data `"this is a test` and location 10, the text will
+    /// be drawn over the word `"test"` regardless of whether it is in the first
+    /// terminal row or second (due to potential wrapping on a very small terminal).
     TextRelativeToData {
+        /// The text to draw.
         text: String,
+        /// Location relative to data at which to draw the text.
         location: usize,
+        /// The style of the text to draw.
         style: TextStyle,
     },
 }
 
+/// The struct intended for rendering everything to the terminal.
+///
+/// Everything rendered to the terminal should come through the [Renderer::render] method.
 pub struct Renderer<T: Write + ?Sized> {
+    /// The output which the rendering is performed.
+    ///
+    /// The type of this field will likely be replaced with [std::io::Stdout] in the future.
     pub output: T,
 }
 
 impl<T: Write + ?Sized> Renderer<T> {
+    /// Render the given data and draw instructions to the terminal.
     pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) {
         self.output.queue(Clear(ClearType::All)).unwrap();
 
@@ -48,6 +72,8 @@ impl<T: Write + ?Sized> Renderer<T> {
         self.output.flush().unwrap();
     }
 
+    /// Render the given data to the screen, taking into account new lines
+    /// and terminal width overflow.
     fn draw_data(&mut self, data: &str) {
         // TODO This function assumes that each line will be smaller
         // or equal to screen width. Take into account that the line
@@ -62,6 +88,10 @@ impl<T: Write + ?Sized> Renderer<T> {
             });
     }
 
+    /// Render the given text at the given location.
+    ///
+    /// See documentation for [Draw::TextRelativeToData] for explanation
+    /// on what "relative to data" means.
     fn draw_text_relative_to_data(
         &mut self,
         text: &str,
@@ -82,6 +112,7 @@ impl<T: Write + ?Sized> Renderer<T> {
         self.output.queue(style::Print(text)).unwrap();
     }
 
+    /// Prepare the terminal for the use by the application.
     pub fn initialize_terminal(&mut self) -> std::io::Result<()> {
         self.output
             .queue(cursor::Hide)?
@@ -91,6 +122,10 @@ impl<T: Write + ?Sized> Renderer<T> {
         Ok(())
     }
 
+    /// Return the terminal to the initial state.
+    ///
+    /// Note that failing to run this function will almost certainly leave
+    /// the terminal in an invalid, unusable state.
     pub fn uninitialize_terminal(&mut self) -> std::io::Result<()> {
         self.output
             .queue(cursor::Show)?
@@ -101,6 +136,10 @@ impl<T: Write + ?Sized> Renderer<T> {
     }
 }
 
+/// Convert the given location relative to data to a location
+/// relative to screen.
+///
+/// Returns a tuple (row, col) representing the location.
 fn data_location_to_screen_location(
     data: &str,
     _rows: u16,
