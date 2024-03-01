@@ -1,4 +1,5 @@
 mod configuration;
+mod hints;
 mod input_handler;
 mod modes;
 mod renderer;
@@ -13,6 +14,7 @@ use std::io;
 use std::process::exit;
 
 use crate::configuration::ModeArgs;
+use crate::hints::HintPoolGenerator;
 
 // TODO Replace all panics, unwraps and similar with something
 // that will not crash the program. It is important not to crash
@@ -48,6 +50,9 @@ fn main() {
         Some(path) => std::fs::read_to_string(path).unwrap(),
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
+
+    // TODO Use to construct the mode
+    let _hint_generator = HintPoolGenerator::new(&config.hint_characters);
 
     let ModeArgs::RegexMode(args) = &config.modes[0].args;
     let mut current_mode = RegexMode::new(&input_text, args);
