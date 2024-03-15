@@ -113,6 +113,7 @@ impl<T: Write + ?Sized> Renderer<T> {
             .queue(style::SetBackgroundColor(style.background))
             .unwrap();
         self.output.queue(style::Print(text)).unwrap();
+        self.output.queue(style::ResetColor).unwrap();
     }
 
     /// Prepare the terminal for the use by the application.
