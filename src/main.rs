@@ -101,7 +101,10 @@ fn main() {
         renderer.render(&input_text, &draw_instructions);
 
         let action = match read() {
-            Ok(event) => input_handler.get_action(event),
+            Ok(event) => {
+                debug!("Got event {:?}", event);
+                input_handler.get_action(event)
+            }
             _ => None,
         };
 
