@@ -11,6 +11,7 @@ use crate::configuration::Config;
 pub struct InputHandler {}
 
 /// Representation of a key press that is delivered to the rest of the application.
+#[derive(Debug)]
 pub struct KeyPress {
     /// The key that was pressed.
     ///
@@ -22,6 +23,7 @@ pub struct KeyPress {
 }
 
 /// The action that resulted from the input.
+#[derive(Debug)]
 pub enum Action {
     /// Exit the application without providing any selected text.
     Exit,

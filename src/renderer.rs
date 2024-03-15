@@ -10,6 +10,7 @@ use crossterm::{
     },
     QueueableCommand,
 };
+use log::trace;
 
 /// Struct to describe text style.
 ///
@@ -56,6 +57,8 @@ pub struct Renderer<T: Write + ?Sized> {
 impl<T: Write + ?Sized> Renderer<T> {
     /// Render the given data and draw instructions to the terminal.
     pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) {
+        trace!("Rendering draw instructions {:#?}", draw_instructions);
+
         self.output.queue(Clear(ClearType::All)).unwrap();
 
         for instruction in draw_instructions {

@@ -20,6 +20,7 @@ pub trait Mode {
 }
 
 /// Enum that specifies the events happening inside the mode.
+#[derive(Debug)]
 pub enum ModeEvent {
     /// The test selection has finished and resulted in the given string.
     TextSelected(String),
