@@ -9,6 +9,7 @@ use regex::Regex;
 
 use crate::{
     configuration,
+    hints::HintGenerator,
     input_handler::KeyPress,
     renderer::{Draw, TextStyle},
 };
@@ -43,27 +44,31 @@ pub struct RegexMode {
 
 impl RegexMode {
     /// Create a new regex mode for selecting from the given data with the given args.
-    pub fn new(data: &str, args: &configuration::RegexArgs) -> Self {
-        // TODO Implement a more reasonable way of choosing hints
-        let mut hint_pool = "asdfghjkl;qwertyuiopzxcvbnm".chars().cycle();
-        let mut hint_hit_map = HashMap::new();
+    pub fn new(
+        data: &str,
+        args: &configuration::RegexArgs,
+        hint_generator: Box<dyn HintGenerator>,
+    ) -> Self {
+        let mut hits = vec![];
+
+        // TODO This will assign the same hint to multiple appearences of the same
+        // match text. Instead, every occurrence of the same word should get the
+        // same hint since it will give the same output.
 
         for regex in &args.regexes {
             let regex = Regex::new(regex).unwrap();
-            let matches = regex.find_iter(data);
-
-            for regex_match in matches {
-                let hint = hint_pool.next().unwrap();
-
-                hint_hit_map.insert(
-                    hint.to_string(),
-                    Hit {
-                        location: regex_match.start(),
-                        text: regex_match.as_str().to_string(),
-                    },
-                );
-            }
+            regex
+                .find_iter(data)
+                .map(|regex_match| Hit {
+                    location: regex_match.start(),
+                    text: regex_match.as_str().to_string(),
+                })
+                .for_each(|hit| hits.push(hit));
         }
+
+        let hints = hint_generator.create_hints(hits.len());
+
+        let hint_hit_map = std::iter::zip(hints, hits).collect();
 
         Self {
             hint_hit_map,
@@ -103,7 +108,7 @@ impl Mode for RegexMode {
 
 #[cfg(test)]
 mod tests {
-    use crate::configuration::RegexArgs;
+    use crate::{configuration::RegexArgs, hints::MockHintGenerator};
 
     use super::*;
 
@@ -114,7 +119,12 @@ mod tests {
             regexes: vec![r"[a-z]{4,}".to_string()],
         };
 
-        let mode = RegexMode::new(text, &args);
+        let mut hint_generator = Box::new(MockHintGenerator::new());
+        hint_generator
+            .expect_create_hints()
+            .return_const(vec!["a".to_string(), "b".to_string()]);
+
+        let mode = RegexMode::new(text, &args, hint_generator);
         let hits: Vec<usize> = mode
             .get_draw_instructions()
             .into_iter()

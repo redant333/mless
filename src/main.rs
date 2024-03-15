@@ -51,11 +51,10 @@ fn main() {
         None => io::stdin().lines().map(|line| line.unwrap()).collect(),
     };
 
-    // TODO Use to construct the mode
-    let _hint_generator = HintPoolGenerator::new(&config.hint_characters);
+    let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
 
     let ModeArgs::RegexMode(args) = &config.modes[0].args;
-    let mut current_mode = RegexMode::new(&input_text, args);
+    let mut current_mode = RegexMode::new(&input_text, args, hint_generator);
 
     renderer.initialize_terminal().unwrap_or_else(|error| {
         eprintln!("Could not initialize the terminal: {}", error);

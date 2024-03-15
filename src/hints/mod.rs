@@ -3,6 +3,7 @@ mod pool_generator;
 pub use pool_generator::HintPoolGenerator;
 
 /// The trait that defines structs that can generate hints.
+#[cfg_attr(test, mockall::automock)]
 pub trait HintGenerator {
     /// Ask the generator to create the requested number of hints.
     ///
