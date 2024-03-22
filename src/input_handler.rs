@@ -1,5 +1,5 @@
 //! Handling of input events before they are delivered to the current mode.
-use crossterm::event::{Event, KeyCode, KeyEvent};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::configuration::Config;
 
@@ -31,8 +31,6 @@ pub enum Action {
     ForwardKeyPress(KeyPress),
 }
 
-const KEYBINDING_EXIT: char = 'q';
-
 impl InputHandler {
     /// Create an [InputHandler] by using the relevant parts of the given config.
     pub fn from_config(_config: &Config) -> InputHandler {
@@ -54,7 +52,8 @@ impl InputHandler {
     fn get_key_action(&self, key: KeyEvent) -> Option<Action> {
         match key {
             KeyEvent {
-                code: KeyCode::Char(KEYBINDING_EXIT),
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
                 ..
             } => Some(Action::Exit),
             KeyEvent {
