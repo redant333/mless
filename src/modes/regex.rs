@@ -97,8 +97,8 @@ impl Mode for RegexMode {
                 text: hint.clone(),
                 location: hit.location,
                 style: TextStyle {
-                    foreground: Color::Red,
-                    background: Color::Yellow,
+                    foreground: Color::parse_ansi("5;232").unwrap(),
+                    background: Color::parse_ansi("5;208").unwrap(),
                 },
             });
 
