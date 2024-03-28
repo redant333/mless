@@ -11,17 +11,20 @@ use crate::{
     configuration,
     hints::HintGenerator,
     input_handler::KeyPress,
-    renderer::{Draw, TextStyle},
+    renderer::{Draw, StyledDataSegment, TextStyle},
 };
 
 use super::{Mode, ModeEvent};
 
 /// Struct that records a hit(match) that can be selected.
 struct Hit {
-    /// Location of the hit within the data.
+    /// Byte offset of the start of the hit.
     ///
     /// This is represented as character offset from the first character.
-    location: usize,
+    start: usize,
+
+    /// Length of the hit in bytes.
+    length: usize,
 
     /// The text of the hit.
     ///
@@ -60,7 +63,8 @@ impl RegexMode {
             regex
                 .find_iter(data)
                 .map(|regex_match| Hit {
-                    location: regex_match.start(),
+                    start: regex_match.start(),
+                    length: regex_match.as_str().len(),
                     text: regex_match.as_str().to_string(),
                 })
                 .for_each(|hit| hits.push(hit));
@@ -90,19 +94,32 @@ impl Mode for RegexMode {
     }
 
     fn get_draw_instructions(&self) -> Vec<Draw> {
-        let matches = self
+        let hints = self
             .hint_hit_map
             .iter()
             .map(|(hint, hit)| Draw::TextRelativeToData {
                 text: hint.clone(),
-                location: hit.location,
+                location: hit.start,
                 style: TextStyle {
                     foreground: Color::parse_ansi("5;232").unwrap(),
                     background: Color::parse_ansi("5;208").unwrap(),
                 },
             });
 
-        iter::once(Draw::Data).chain(matches).collect()
+        let highlights = self
+            .hint_hit_map
+            .values()
+            .map(|hit| StyledDataSegment {
+                start: hit.start,
+                length: hit.length,
+                style: TextStyle {
+                    foreground: Color::parse_ansi("5;232").unwrap(),
+                    background: Color::parse_ansi("5;252").unwrap(),
+                },
+            })
+            .collect();
+
+        iter::once(Draw::Data(highlights)).chain(hints).collect()
     }
 }
 

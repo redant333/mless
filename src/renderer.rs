@@ -21,11 +21,28 @@ pub struct TextStyle {
     pub background: Color,
 }
 
+/// Struct to describe a styled segment of data.
+///
+/// Used in [Draw::Data].
+#[derive(Debug)]
+pub struct StyledDataSegment {
+    /// Byte offset of the start of the segment.
+    pub start: usize,
+    /// Lenght of the segment in bytes.
+    pub length: usize,
+    /// Style of the segment.
+    pub style: TextStyle,
+}
+
 /// Instruction to [Renderer] about what should be drawn to the screen.
 #[derive(Debug)]
 pub enum Draw {
-    /// Draw the data, i.e. the text from which the selection is performed.
-    Data,
+    /// Draw the data, i.e. the text from which the selection is performed
+    /// with certain segments styled as specified.
+    ///
+    /// If some of the segments are overlapping, the last one specified takes precedence.
+    Data(Vec<StyledDataSegment>),
+
     /// Draw the provided text at a location relative to the data.
     ///
     /// Being relative to data and not screen coordinates, allows the [Renderer]
@@ -56,6 +73,8 @@ pub struct Renderer<T: Write + ?Sized> {
 
 impl<T: Write + ?Sized> Renderer<T> {
     /// Render the given data and draw instructions to the terminal.
+    ///
+    /// Draw instructions are executed in the given order.
     pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) {
         trace!("Rendering draw instructions {:#?}", draw_instructions);
 
@@ -63,7 +82,10 @@ impl<T: Write + ?Sized> Renderer<T> {
 
         for instruction in draw_instructions {
             match instruction {
-                Draw::Data => self.draw_data(data),
+                Draw::Data(styled_segments) => {
+                    self.draw_data(data);
+                    self.draw_styled_data(data, styled_segments);
+                }
                 Draw::TextRelativeToData {
                     text,
                     location,
@@ -89,6 +111,35 @@ impl<T: Write + ?Sized> Renderer<T> {
                 self.output.queue(cursor::MoveTo(0, row as u16)).unwrap();
                 self.output.queue(Print(line)).unwrap();
             });
+    }
+
+    /// Render styled parts of data to the screen, taking into account new lines
+    /// and terminal width overflow.
+    ///
+    /// Note that this does not render parts of the data that are note styled and
+    /// is intended to be used as an overlay over the original data.
+    fn draw_styled_data(&mut self, data: &str, styled_segments: &[StyledDataSegment]) {
+        let (cols, rows) = terminal::size().unwrap();
+
+        for segment in styled_segments {
+            self.output
+                .queue(style::SetForegroundColor(segment.style.foreground))
+                .unwrap();
+            self.output
+                .queue(style::SetBackgroundColor(segment.style.background))
+                .unwrap();
+
+            // Drawing needs to be done character by character in order to
+            // make sure that wrapped text is drawn correctly
+            for index in segment.start..(segment.start + segment.length) {
+                let (row, col) = data_location_to_screen_location(data, rows, cols, index);
+
+                self.output.queue(cursor::MoveTo(col, row)).unwrap();
+                self.output
+                    .queue(Print(data.chars().nth(index).unwrap()))
+                    .unwrap();
+            }
+        }
     }
 
     /// Render the given text at the given location.
@@ -153,6 +204,11 @@ fn data_location_to_screen_location(
     // TODO This function assumes that each line will be smaller
     // or equal to screen width. Take into account that the line
     // can overflow.
+
+    // TODO This function interprets location as offset in characters
+    // while the module works with offsets in bytes. This will not work
+    // if the input contains any non ASCII characters or ANSI color sequences.
+    // The same applies to draw_styled_data.
     let (row, row_start) = data[..=location].chars().enumerate().fold(
         (0, 0),
         |(row, row_start), (char_index, char)| {
