@@ -72,7 +72,10 @@ fn main() {
 
     let input_text = match args.file {
         Some(path) => std::fs::read_to_string(path).unwrap(),
-        None => io::stdin().lines().map(|line| line.unwrap()).collect(),
+        None => io::stdin()
+            .lines()
+            .map(|line| line.unwrap() + "\n")
+            .collect(),
     };
 
     let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
