@@ -94,6 +94,9 @@ impl Mode for RegexMode {
     }
 
     fn get_draw_instructions(&self) -> Vec<Draw> {
+        let hint_fg = Color::parse_ansi("5;232").unwrap();
+        let hint_bg = Color::parse_ansi("5;208").unwrap();
+
         let hints = self
             .hint_hit_map
             .iter()
@@ -101,10 +104,13 @@ impl Mode for RegexMode {
                 text: hint.clone(),
                 location: hit.start,
                 style: TextStyle {
-                    foreground: Color::parse_ansi("5;232").unwrap(),
-                    background: Color::parse_ansi("5;208").unwrap(),
+                    foreground: hint_fg,
+                    background: hint_bg,
                 },
             });
+
+        let highlight_fg = Color::parse_ansi("5;232").unwrap();
+        let highlight_bg = Color::parse_ansi("5;252").unwrap();
 
         let highlights = self
             .hint_hit_map
@@ -113,8 +119,8 @@ impl Mode for RegexMode {
                 start: hit.start,
                 length: hit.length,
                 style: TextStyle {
-                    foreground: Color::parse_ansi("5;232").unwrap(),
-                    background: Color::parse_ansi("5;252").unwrap(),
+                    foreground: highlight_fg,
+                    background: highlight_bg,
                 },
             })
             .collect();
