@@ -20,3 +20,11 @@ repos:
         # whole project should be kept linted at all times.
         entry: sh -c "cargo clippy -- -Dwarnings"
         files: \.rs$
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.4.2
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/flake8
+    rev: '7.0.0'
+    hooks:
+      - id: flake8

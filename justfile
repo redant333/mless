@@ -39,3 +39,7 @@ test-e2e-run: test-venv-init
     pytest
 
 alias e := test-e2e-run
+
+# Run all pre-commit checks.
+pre-commit:
+    pre-commit run --all-files

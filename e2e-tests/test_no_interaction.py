@@ -1,4 +1,5 @@
 """Tests that don't require user interaction apart from running."""
+
 import pytest_tuitest as tt
 
 
@@ -7,7 +8,8 @@ def test_can_display_help(terminal):
     """Verify that help is displayed when run with --help."""
     (status, _, _) = terminal.wait_for_finished()
 
-    assert status == 0, f"Expected the program to return success, it returned {status}"
+    msg = f"Expected the program to return success, it returned {status}"
+    assert status == 0, msg
 
     (row, col) = (2, 0)
     expected = "Usage:"
