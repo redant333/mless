@@ -37,3 +37,5 @@ test-e2e-run: test-venv-init
     source "{{test_venv_activate}}"
     cd "{{e2e_tests_dir}}"
     pytest
+
+alias e := test-e2e-run
