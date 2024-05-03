@@ -1,0 +1,3 @@
+[submodule "e2e-tests/pytest-tuitest"]
+	path = e2e-tests/pytest-tuitest
+	url = git@github.com:redant333/pytest-tuitest.git
