@@ -6,14 +6,18 @@ import pytest_tuitest as tt
 @tt.with_arguments(["--help"])
 def test_can_display_help(terminal):
     """Verify that help is displayed when run with --help."""
-    (status, _, _) = terminal.wait_for_finished()
+    (status, stdout, stderr) = terminal.wait_for_finished()
 
-    msg = f"Expected the program to return success, it returned {status}"
+    msg = "Expected program to finish successfully, got non-zero exit status"
     assert status == 0, msg
 
-    (row, col) = (2, 0)
-    expected = "Usage:"
-    actual = terminal.get_string_at(row, col, len(expected))
+    assert stderr == "", "Expected empty stderr, got something else"
 
-    msg = f"Expected '{expected}' at ({row}, {col}), found {actual}"
-    assert actual == expected, msg
+    msg = "Expected stdout to contain word 'Usage', not found"
+    assert "Usage" in stdout, msg
+
+    msg = "Expected stdout to contain word 'Arguments', not found"
+    assert "Arguments" in stdout, msg
+
+    msg = "Expected stdout to contain word 'Options', not found"
+    assert "Options" in stdout, msg
