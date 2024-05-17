@@ -2,6 +2,7 @@ e2e_tests_dir := "e2e-tests"
 test_venv_path := e2e_tests_dir / "venv"
 test_venv_activate := test_venv_path / "bin" / "activate"
 test_venv_requirements := e2e_tests_dir / "requirements.txt"
+executable_debug := "target/debug/mouseless-selector"
 
 # Initialize end to end testing venv. Does nothing if it already exists.
 test-venv-init:
@@ -35,8 +36,9 @@ test-venv-reinit: test-venv-delete test-venv-init
 test-e2e-run: test-venv-init
     #!/bin/bash -eu
     source "{{test_venv_activate}}"
+    executable_path=$(realpath {{executable_debug}})
     cd "{{e2e_tests_dir}}"
-    pytest
+    pytest --tuitest-default-executable="$executable_path"
 
 alias e := test-e2e-run
 
