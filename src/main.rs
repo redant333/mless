@@ -14,10 +14,25 @@ use modes::{Mode, ModeEvent, RegexMode};
 use renderer::Renderer;
 use std::fs::File;
 use std::io;
+use std::path::PathBuf;
 use std::process::exit;
 
 use crate::configuration::ModeArgs;
 use crate::hints::HintPoolGenerator;
+use snafu::prelude::*;
+
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
+pub enum RunError {
+    #[snafu(display("Could not open config file {}\n{}", path.display(), source))]
+    ConfigOpen { source: io::Error, path: PathBuf },
+
+    #[snafu(display("Could not parse config file {}\n{}", path.display(), source))]
+    ConfigParse {
+        source: configuration::Error,
+        path: PathBuf,
+    },
+}
 
 // TODO Replace all panics, unwraps and similar with something
 // that will not crash the program. It is important not to crash
@@ -29,6 +44,9 @@ use crate::hints::HintPoolGenerator;
 struct Args {
     /// File to select the text from. Omit to use standard input.
     file: Option<std::path::PathBuf>,
+    /// Config file to read.
+    #[arg(short, long, value_name = "CONFIG_FILE")]
+    config: Option<std::path::PathBuf>,
 }
 
 const EXIT_ERROR: i32 = -1;
@@ -51,19 +69,33 @@ fn initialize_logging() {
 
     info!("Logging into {}", log_path);
 }
-
-fn main() {
-    initialize_logging();
-    info!("Initializing");
-
-    let args = Args::parse();
+/// Load the [Config] from the given path. If path is [None], the default
+/// value for [Config] is returned.
+fn load_config(path: Option<PathBuf>) -> Result<Config, RunError> {
     // TODO Validate the configuration before continuing.
     // It is possible that some things will be validated automatically,
     // due to used types, but at least some things need to be validated
     // manually.
-    let config = Config {
+    if let Some(path) = path {
+        let file = File::open(path.clone()) //
+            .context(ConfigOpenSnafu { path: path.clone() })?;
+        let config = Config::try_from(file) //
+            .context(ConfigParseSnafu { path })?;
+
+        return Ok(config);
+    }
+
+    Ok(Config {
         ..Default::default()
-    };
+    })
+}
+
+fn run() -> Result<(), RunError> {
+    initialize_logging();
+    info!("Initializing");
+
+    let args = Args::parse();
+    let config = load_config(args.config)?;
 
     let input_handler = InputHandler::from_config(&config);
     let mut renderer = Renderer {
@@ -139,6 +171,15 @@ fn main() {
     });
 
     print!("{}", return_text);
+
+    exit(EXIT_SUCCESS);
+}
+
+fn main() {
+    if let Err(error) = run() {
+        eprintln!("{}", error);
+        exit(EXIT_ERROR);
+    }
 
     exit(EXIT_SUCCESS);
 }

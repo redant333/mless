@@ -6,6 +6,7 @@ use snafu::{ResultExt, Snafu};
 
 #[derive(Debug, Snafu)]
 pub enum Error {
+    #[snafu(display("{}", source))]
     ParseError { source: serde_yaml::Error },
 }
 
