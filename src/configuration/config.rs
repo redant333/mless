@@ -1,5 +1,13 @@
+use std::fs::File;
+
 use super::modes;
 use serde::{Deserialize, Serialize};
+use snafu::{ResultExt, Snafu};
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    ParseError { source: serde_yaml::Error },
+}
 
 /// The main configuration struct representing the whole configuration
 /// file.
@@ -43,6 +51,17 @@ impl Config {
                 regexes: vec![r"[a-zA-Z]{5,}".to_string()],
             }),
         }]
+    }
+}
+
+impl TryFrom<File> for Config {
+    type Error = Error;
+
+    fn try_from(file: File) -> Result<Self, Self::Error> {
+        let config = serde_yaml::from_reader(file) //
+            .context(ParseSnafu {})?;
+
+        Ok(config)
     }
 }
 
