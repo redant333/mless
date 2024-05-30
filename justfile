@@ -33,12 +33,12 @@ test-venv-delete:
 test-venv-reinit: test-venv-delete test-venv-init
 
 # Run end to end tests.
-test-e2e-run: test-venv-init
+test-e2e-run *additional_args: test-venv-init
     #!/bin/bash -eu
     source "{{test_venv_activate}}"
     executable_path=$(realpath {{executable_debug}})
     cd "{{e2e_tests_dir}}"
-    pytest --tuitest-default-executable="$executable_path"
+    pytest --tuitest-default-executable="$executable_path" . {{additional_args}}
 
 alias e := test-e2e-run
 
