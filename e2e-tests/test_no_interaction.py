@@ -1,6 +1,7 @@
 """Tests that don't require user interaction apart from running."""
 
 import pytest_tuitest as tt
+from utils import STATUS_OK
 
 
 @tt.with_arguments(["--help"])
@@ -9,7 +10,7 @@ def test_can_display_help(terminal):
     (status, stdout, stderr) = terminal.wait_for_finished()
 
     msg = "Expected program to finish successfully, got non-zero exit status"
-    assert status == 0, msg
+    assert status == STATUS_OK, msg
 
     assert stderr == "", "Expected empty stderr, got something else"
 
