@@ -35,6 +35,12 @@ pub enum RunError {
 
     #[snafu(display("Could not open /dev/tty for writing\n{}", source))]
     TtyOpen { source: io::Error },
+
+    #[snafu(display("Could not {operation} the terminal\n{source}"))]
+    TerminalHandling {
+        source: io::Error,
+        operation: String,
+    },
 }
 
 // TODO Replace all panics, unwraps and similar with something
@@ -51,9 +57,6 @@ struct Args {
     #[arg(short, long, value_name = "CONFIG_FILE")]
     config: Option<std::path::PathBuf>,
 }
-
-const EXIT_ERROR: i32 = -1;
-const EXIT_SUCCESS: i32 = 0;
 
 const LOG_PATH_ENV: &str = "MLESS_LOG";
 const LOG_DEFAULT_LEVEL: &str = "debug";
@@ -72,6 +75,7 @@ fn initialize_logging() {
 
     info!("Logging into {}", log_path);
 }
+
 /// Load the [Config] from the given path. If path is [None], the default
 /// value for [Config] is returned.
 fn load_config(path: Option<PathBuf>) -> Result<Config, RunError> {
@@ -107,11 +111,10 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
     Ok(renderer)
 }
 
-fn run() -> Result<(), RunError> {
+fn run(args: Args) -> Result<String, RunError> {
     initialize_logging();
     info!("Initializing");
 
-    let args = Args::parse();
     let config = load_config(args.config)?;
 
     let input_handler = InputHandler::from_config(&config);
@@ -130,18 +133,11 @@ fn run() -> Result<(), RunError> {
     let ModeArgs::RegexMode(args) = &config.modes[0].args;
     let mut current_mode = RegexMode::new(&input_text, args, hint_generator);
 
-    renderer.initialize_terminal().unwrap_or_else(|error| {
-        eprintln!("Could not initialize the terminal: {}", error);
-        // Do a best effort to reset the terminal
-        renderer.uninitialize_terminal().unwrap_or_else(|error| {
-            eprintln!(
-                "Could not recover the terminal after failed initialization: {}",
-                error
-            );
-            eprintln!("Your terminal might start behaving incorrectly");
-        });
-        exit(EXIT_ERROR);
-    });
+    renderer
+        .initialize_terminal()
+        .context(TerminalHandlingSnafu {
+            operation: "initialize",
+        })?;
 
     let mut return_text = String::new();
 
@@ -179,22 +175,29 @@ fn run() -> Result<(), RunError> {
         }
     }
 
-    renderer.uninitialize_terminal().unwrap_or_else(|error| {
-        eprintln!("Could not uninitialize the terminal: {}", error);
-        eprintln!("Your terminal might start behaving incorrectly");
-        exit(EXIT_ERROR);
-    });
+    renderer
+        .uninitialize_terminal()
+        .context(TerminalHandlingSnafu {
+            operation: "uninitialize",
+        })?;
 
-    print!("{}", return_text);
-
-    exit(EXIT_SUCCESS);
+    Ok(return_text)
 }
 
 fn main() {
-    if let Err(error) = run() {
-        eprintln!("{}", error);
-        exit(EXIT_ERROR);
-    }
+    const EXIT_ERROR: i32 = -1;
+    const EXIT_SUCCESS: i32 = 0;
 
-    exit(EXIT_SUCCESS);
+    let args = Args::parse();
+
+    match run(args) {
+        Ok(selection) => {
+            print!("{}", selection);
+            exit(EXIT_SUCCESS);
+        }
+        Err(error) => {
+            eprintln!("{}", error);
+            exit(EXIT_ERROR);
+        }
+    }
 }
