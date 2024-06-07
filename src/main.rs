@@ -12,7 +12,7 @@ use input_handler::{Action, InputHandler};
 use log::{debug, info};
 use modes::{Mode, ModeEvent, RegexMode};
 use renderer::Renderer;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::PathBuf;
 use std::process::exit;
@@ -32,6 +32,9 @@ pub enum RunError {
         source: configuration::Error,
         path: PathBuf,
     },
+
+    #[snafu(display("Could not open /dev/tty for writing\n{}", source))]
+    TtyOpen { source: io::Error },
 }
 
 // TODO Replace all panics, unwraps and similar with something
@@ -90,6 +93,20 @@ fn load_config(path: Option<PathBuf>) -> Result<Config, RunError> {
     })
 }
 
+fn create_renderer() -> Result<Renderer<File>, RunError> {
+    // Perform rendering to /dev/tty to enable piping of the output
+    let output_path = "/dev/tty";
+
+    let tty = OpenOptions::new()
+        .append(true)
+        .open(output_path)
+        .context(TtyOpenSnafu {})?;
+
+    let renderer = Renderer { output: tty };
+
+    Ok(renderer)
+}
+
 fn run() -> Result<(), RunError> {
     initialize_logging();
     info!("Initializing");
@@ -98,9 +115,7 @@ fn run() -> Result<(), RunError> {
     let config = load_config(args.config)?;
 
     let input_handler = InputHandler::from_config(&config);
-    let mut renderer = Renderer {
-        output: io::stdout(),
-    };
+    let mut renderer = create_renderer()?;
 
     let input_text = match args.file {
         Some(path) => std::fs::read_to_string(path).unwrap(),
