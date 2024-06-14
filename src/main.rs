@@ -52,6 +52,10 @@ pub enum RunError {
 // in order to uninitialize the terminal and leave it in a good
 // state.
 
+// TODO Document the general architecture of the application.
+// This should probably wait until the architecture is at least
+// somewhat stable.
+
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 struct Args {
