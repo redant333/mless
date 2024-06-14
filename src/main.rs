@@ -1,15 +1,16 @@
 mod configuration;
 mod hints;
 mod input_handler;
+mod logging;
 mod modes;
 mod renderer;
 
 use clap::Parser;
 use configuration::Config;
 use crossterm::event::read;
-use env_logger::Env;
 use input_handler::{Action, InputHandler};
 use log::{debug, info};
+use logging::initialize_logging;
 use modes::{Mode, ModeEvent, RegexMode};
 use renderer::Renderer;
 use std::fs::{File, OpenOptions};
@@ -41,6 +42,9 @@ pub enum RunError {
         source: io::Error,
         operation: String,
     },
+
+    #[snafu(display("Could not start logging to {}\n{}", path, source))]
+    LoggingStart { source: io::Error, path: String },
 }
 
 // TODO Replace all panics, unwraps and similar with something
@@ -56,24 +60,6 @@ struct Args {
     /// Config file to read.
     #[arg(short, long, value_name = "CONFIG_FILE")]
     config: Option<std::path::PathBuf>,
-}
-
-const LOG_PATH_ENV: &str = "MLESS_LOG";
-const LOG_DEFAULT_LEVEL: &str = "debug";
-
-fn initialize_logging() {
-    let Ok(log_path) = std::env::var(LOG_PATH_ENV) else {
-        return;
-    };
-
-    let msg = format!("Couldn't open {} for logging", log_path);
-    let log_file = Box::new(File::create(log_path.clone()).expect(&msg));
-
-    env_logger::Builder::from_env(Env::default().default_filter_or(LOG_DEFAULT_LEVEL))
-        .target(env_logger::Target::Pipe(log_file))
-        .init();
-
-    info!("Logging into {}", log_path);
 }
 
 /// Load the [Config] from the given path. If path is [None], the default
@@ -112,7 +98,7 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
 }
 
 fn run(args: Args) -> Result<String, RunError> {
-    initialize_logging();
+    initialize_logging()?;
     info!("Initializing");
 
     let config = load_config(args.config)?;
