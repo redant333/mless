@@ -28,7 +28,7 @@ pub struct TextStyle {
 pub struct StyledDataSegment {
     /// Byte offset of the start of the segment.
     pub start: usize,
-    /// Lenght of the segment in bytes.
+    /// Length of the segment in bytes.
     pub length: usize,
     /// Style of the segment.
     pub style: TextStyle,
@@ -116,7 +116,7 @@ impl<T: Write + ?Sized> Renderer<T> {
     /// Render styled parts of data to the screen, taking into account new lines
     /// and terminal width overflow.
     ///
-    /// Note that this does not render parts of the data that are note styled and
+    /// Note that this does not render parts of the data that are not styled and
     /// is intended to be used as an overlay over the original data.
     fn draw_styled_data(&mut self, data: &str, styled_segments: &[StyledDataSegment]) {
         let (cols, rows) = terminal::size().unwrap();
