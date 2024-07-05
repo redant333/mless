@@ -150,35 +150,50 @@ impl Mode for RegexMode {
 
 #[cfg(test)]
 mod tests {
-    // use crate::{configuration::RegexArgs, hints::MockHintGenerator};
+    use crate::{configuration::RegexArgs, hints::MockHintGenerator};
 
-    // use super::*;
+    use super::*;
 
-    // TODO This test uses the old Renderer API fix it to work with the new one
-    // #[test]
-    // fn produces_instructions_at_expected_locations() {
-    //     let text = "things and stuff";
-    //     let args = RegexArgs {
-    //         regexes: vec![r"[a-z]{4,}".to_string()],
-    //     };
+    fn has_overlay_at_location(overlays: &[DataOverlay], location: usize) -> bool {
+        overlays.iter().any(|overlay| overlay.location == location)
+    }
 
-    //     let mut hint_generator = Box::new(MockHintGenerator::new());
-    //     hint_generator
-    //         .expect_create_hints()
-    //         .return_const(vec!["a".to_string(), "b".to_string()]);
+    fn has_highlight(highlights: &[StyledSegment], start: usize, length: usize) -> bool {
+        highlights
+            .iter()
+            .any(|highlight| highlight.start == start && highlight.length == length)
+    }
 
-    //     let mode = RegexMode::new(text, &args, hint_generator);
-    //     let hits: Vec<usize> = mode
-    //         .get_draw_instructions()
-    //         .into_iter()
-    //         .filter_map(|instruction| match instruction {
-    //             Draw::TextRelativeToData { location, .. } => Some(location),
-    //             _ => None,
-    //         })
-    //         .collect();
+    #[test]
+    fn produces_expected_highlights_and_overlays_for_simple_text() {
+        let text = "things and stuff";
+        let args = RegexArgs {
+            regexes: vec![r"[a-z]{4,}".to_string()],
+        };
 
-    //     assert_eq!(hits.len(), 2);
-    //     assert!(hits.contains(&0)); // hit things
-    //     assert!(hits.contains(&11)); // hit stuff
-    // }
+        let mut hint_generator = Box::new(MockHintGenerator::new());
+        hint_generator
+            .expect_create_hints()
+            .return_const(vec!["a".to_string(), "b".to_string()]);
+
+        let mode = RegexMode::new(text, &args, hint_generator);
+        let Draw::StyledData {
+            text_overlays,
+            styled_segments,
+        } = mode.get_draw_instructions().into_iter().next().unwrap();
+
+        println!("{:?}", text_overlays);
+        assert_eq!(text_overlays.len(), 2);
+        assert!(has_overlay_at_location(&text_overlays, 0));
+        assert!(has_overlay_at_location(&text_overlays, 11));
+
+        assert_eq!(styled_segments.len(), 4);
+        // Highlights for "things" match
+        assert!(has_highlight(&styled_segments, 0, 6));
+        assert!(has_highlight(&styled_segments, 0, 1));
+
+        // Highlights for "stuff" match
+        assert!(has_highlight(&styled_segments, 11, 5));
+        assert!(has_highlight(&styled_segments, 11, 1));
+    }
 }
