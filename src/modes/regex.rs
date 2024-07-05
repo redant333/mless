@@ -45,10 +45,6 @@ pub struct RegexMode {
     input_buffer: String,
 }
 
-// TODO Currently, ANSI color sequences can be matched by regexes. This should
-// not happen because they are not visible. The problem is most obvious with the
-// m at the end of the sequences.
-
 impl RegexMode {
     /// Create a new regex mode for selecting from the given data with the given args.
     pub fn new(
@@ -62,14 +58,27 @@ impl RegexMode {
         // match text. Instead, every occurrence of the same match should get the
         // same hint since it will give the same output.
 
+        // If there is an ANSI color sequence before the match, it should be ignored.
+        // For that reason, add the ignore regex to the beginning and the end of the
+        // regex being searched with a ? operator. If it's there, it won't be included
+        // in the main match, if it isn't, it will just be ignored.
+        // This can be extended for anything else that needs to be ignored.
+        let ignore_regex = "\x1b\\[[^m]+m".to_string();
+
         for regex in &args.regexes {
-            let regex = Regex::new(regex).unwrap();
+            let wrapped_regex = format!("({ignore_regex})?({regex})({ignore_regex})?");
+            let regex = Regex::new(&wrapped_regex).unwrap();
+
             regex
-                .find_iter(data)
-                .map(|regex_match| Hit {
-                    start: regex_match.start(),
-                    length: regex_match.as_str().len(),
-                    text: regex_match.as_str().to_string(),
+                .captures_iter(data)
+                .filter_map(|capture| {
+                    let regex_match = capture.get(2)?;
+
+                    Some(Hit {
+                        start: regex_match.start(),
+                        length: regex_match.as_str().len(),
+                        text: regex_match.as_str().to_string(),
+                    })
                 })
                 .for_each(|hit| hits.push(hit));
         }
@@ -164,17 +173,15 @@ mod tests {
             .any(|highlight| highlight.start == start && highlight.length == length)
     }
 
-    #[test]
-    fn produces_expected_highlights_and_overlays_for_simple_text() {
-        let text = "things and stuff";
-        let args = RegexArgs {
-            regexes: vec![r"[a-z]{4,}".to_string()],
-        };
+    fn get_draw_instructions(
+        text: &str,
+        regexes: Vec<String>,
+        hints: Vec<String>,
+    ) -> (Vec<DataOverlay>, Vec<StyledSegment>) {
+        let args = RegexArgs { regexes };
 
         let mut hint_generator = Box::new(MockHintGenerator::new());
-        hint_generator
-            .expect_create_hints()
-            .return_const(vec!["a".to_string(), "b".to_string()]);
+        hint_generator.expect_create_hints().return_const(hints);
 
         let mode = RegexMode::new(text, &args, hint_generator);
         let Draw::StyledData {
@@ -182,7 +189,17 @@ mod tests {
             styled_segments,
         } = mode.get_draw_instructions().into_iter().next().unwrap();
 
-        println!("{:?}", text_overlays);
+        (text_overlays, styled_segments)
+    }
+
+    #[test]
+    fn produces_expected_highlights_and_overlays_for_simple_text() {
+        let (text_overlays, styled_segments) = get_draw_instructions(
+            "things and stuff",
+            vec![r"[a-z]{4,}".into()],
+            vec!["a".into(), "b".into()],
+        );
+
         assert_eq!(text_overlays.len(), 2);
         assert!(has_overlay_at_location(&text_overlays, 0));
         assert!(has_overlay_at_location(&text_overlays, 11));
@@ -195,5 +212,27 @@ mod tests {
         // Highlights for "stuff" match
         assert!(has_highlight(&styled_segments, 11, 5));
         assert!(has_highlight(&styled_segments, 11, 1));
+    }
+
+    #[test]
+    fn produces_expected_highlights_and_overlays_for_colored_text() {
+        let (text_overlays, styled_segments) = get_draw_instructions(
+            "\x1b[94mthings\x1b[0m and \x1b[93mstuff\x1b[0m",
+            vec![r"[a-z]{4,}".into()],
+            vec!["a".into(), "b".into()],
+        );
+
+        assert_eq!(text_overlays.len(), 2);
+        assert!(has_overlay_at_location(&text_overlays, 5));
+        assert!(has_overlay_at_location(&text_overlays, 25));
+
+        assert_eq!(styled_segments.len(), 4);
+        // Highlights for "things" match
+        assert!(has_highlight(&styled_segments, 5, 6));
+        assert!(has_highlight(&styled_segments, 5, 1));
+
+        // Highlights for "stuff" match
+        assert!(has_highlight(&styled_segments, 25, 5));
+        assert!(has_highlight(&styled_segments, 25, 1));
     }
 }
