@@ -106,6 +106,7 @@ impl<T: Write + ?Sized> Renderer<T> {
     ) {
         let mut overlay_chars: VecDeque<char> = VecDeque::new();
         let mut color_stack: Vec<(Color, Color)> = vec![];
+        let mut refresh_colors = false;
 
         for (byte_position, char) in data.char_indices() {
             // Handle end of segment
@@ -114,6 +115,7 @@ impl<T: Write + ?Sized> Renderer<T> {
                 .filter(|s| (s.start + s.length) == byte_position)
                 .for_each(|_| {
                     color_stack.pop();
+                    refresh_colors = true;
                 });
 
             // Handle start of segment
@@ -121,7 +123,8 @@ impl<T: Write + ?Sized> Renderer<T> {
                 .iter()
                 .filter(|s| s.start == byte_position)
                 .for_each(|segment| {
-                    color_stack.push((segment.style.background, segment.style.foreground))
+                    color_stack.push((segment.style.background, segment.style.foreground));
+                    refresh_colors = true;
                 });
 
             // Handle start of overlay
@@ -133,17 +136,20 @@ impl<T: Write + ?Sized> Renderer<T> {
                 text.chars().for_each(|char| overlay_chars.push_back(char));
             }
 
-            // TODO Would probably be a good idea to check if the new color is
-            // different from the last, to avoid spamming terminal with color codes
-            if let Some((background, foreground)) = color_stack.last() {
-                self.output
-                    .queue(style::SetForegroundColor(*foreground))
-                    .unwrap();
-                self.output
-                    .queue(style::SetBackgroundColor(*background))
-                    .unwrap();
-            } else {
-                self.output.queue(style::ResetColor).unwrap();
+            // Change color if needed
+            if refresh_colors {
+                if let Some((background, foreground)) = color_stack.last() {
+                    self.output
+                        .queue(style::SetForegroundColor(*foreground))
+                        .unwrap();
+                    self.output
+                        .queue(style::SetBackgroundColor(*background))
+                        .unwrap();
+                } else {
+                    self.output.queue(style::ResetColor).unwrap();
+                }
+
+                refresh_colors = false;
             }
 
             // Print character
