@@ -108,6 +108,9 @@ impl<T: Write + ?Sized> Renderer<T> {
         let mut color_stack: Vec<(Color, Color)> = vec![];
         let mut refresh_colors = false;
 
+        // TODO Make sure that styled segments do not inherit text properties like bold
+        // from the outer text
+
         for (byte_position, char) in data.char_indices() {
             // Handle end of segment
             styled_segments
