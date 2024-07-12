@@ -58,3 +58,35 @@ def test_correctly_renders_long_lines(terminal):
 
     third_row = terminal.get_string_at(2, 0, 10)
     assert third_row == "abcd      ", "Third rendered row has an unexpected value"
+
+
+@tt.with_stdin("aåбḁ😀")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_correctly_renders_non_ascii_characters(terminal):
+    """Verify that non-ASCII characters are rendered and handled correctly."""
+    terminal.wait_for_stable_output()
+
+    msg = "Non-ASCII character not handled as expected"
+    assert "a" == terminal.get_string_at(0, 0, 1), msg
+    assert "å" == terminal.get_string_at(0, 1, 1), msg
+    assert "б" == terminal.get_string_at(0, 2, 1), msg
+    assert "ḁ" == terminal.get_string_at(0, 3, 1), msg
+    assert "😀" == terminal.get_string_at(0, 4, 1), msg
+
+
+@tt.with_stdin("aåбḁ😀test👽")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_can_select_text_from_text_with_non_ascii_characters(terminal):
+    """Verify that non-ASCII characters don't interfere with text selection."""
+    terminal.wait_for_stable_output()
+
+    # Assume the first hint is q since pytest-tuitest gets confused with
+    # 😀 and thinks it's two characters.
+    # TODO Update this to dynamically retrieve the hint once pytest-tuitest problem is fixed
+    terminal.send("q")
+
+    (status, stdout, stderr) = terminal.wait_for_finished()
+
+    assert status == STATUS_OK, "The proces unexpectedly failed"
+    assert stdout == "test", "Returned stdout not as expected"
+    assert stderr == "", "Expected empty stderr, got something"
