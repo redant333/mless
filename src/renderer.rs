@@ -111,7 +111,13 @@ impl<T: Write + ?Sized> Renderer<T> {
         // TODO Make sure that styled segments do not inherit text properties like bold
         // from the outer text
 
-        for (byte_position, char) in data.char_indices() {
+        // Ignore the terminating new line if present
+        let data_range = match data.as_bytes().last() {
+            Some(b'\n') => 0..(data.len() - 1),
+            _ => 0..data.len(),
+        };
+
+        for (byte_position, char) in data[data_range].char_indices() {
             // Handle end of segment
             styled_segments
                 .iter()

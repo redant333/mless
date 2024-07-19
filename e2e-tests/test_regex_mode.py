@@ -90,3 +90,18 @@ def test_can_select_text_from_text_with_non_ascii_characters(terminal):
     assert status == STATUS_OK, "The proces unexpectedly failed"
     assert stdout == "test", "Returned stdout not as expected"
     assert stderr == "", "Expected empty stderr, got something"
+
+
+@tt.with_stdin("0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n")
+@tt.with_terminal_size(10, 10)
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_correctly_renders_text_of_same_height_as_terminal(terminal):
+    """Verify rendering works when text line count is same as terminal height.
+
+    This should work even if there is a new line at the end of the file since
+    this is just a terminator and does not make the line actually longer.
+    """
+    terminal.wait_for_stable_output()
+
+    msg = "The last line was not rendered correctly"
+    assert terminal.get_string_at(9, 0, 1) == "9", msg
