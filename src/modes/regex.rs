@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 
 use crossterm::style::Color;
+use log::trace;
 use regex::Regex;
 
 use crate::{
@@ -16,6 +17,7 @@ use crate::{
 
 use super::{Mode, ModeEvent};
 
+#[derive(Debug)]
 /// Struct that records a hit(match) that can be selected.
 struct Hit {
     /// Byte offset of the start of the hit.
@@ -86,6 +88,8 @@ impl RegexMode {
         let hints = hint_generator.create_hints(hits.len());
 
         let hint_hit_map = std::iter::zip(hints, hits).collect();
+
+        trace!("Constructed hint hit map {:#?}", hint_hit_map);
 
         Self {
             hint_hit_map,
