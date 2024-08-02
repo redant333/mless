@@ -111,6 +111,9 @@ impl<T: Write + ?Sized> Renderer<T> {
         // TODO Make sure that styled segments do not inherit text properties like bold
         // from the outer text
 
+        // TODO ANSI sequences can happen inside of highlights. Make sure that styled
+        // segments are rendered correctly in these situations
+
         // Ignore the terminating new line if present
         let data_range = match data.as_bytes().last() {
             Some(b'\n') => 0..(data.len() - 1),
