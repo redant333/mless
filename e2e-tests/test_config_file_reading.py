@@ -1,6 +1,5 @@
 """Tests for processing of the config file sent via --config."""
 
-import pytest
 import pytest_tuitest as tt
 from utils import STATUS_ERROR, config_path
 
@@ -17,11 +16,6 @@ def test_fails_with_appropriate_error_when_config_file_does_not_exist(terminal):
     assert stderr.startswith("Could not open config file "), msg
 
 
-@pytest.mark.skip(
-    "This test is failing because the output seems to be going to "
-    "stdout instead of tty and thus gets captured instead of being "
-    "displayed in the terminal."
-)
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])
 @tt.with_stdin("test nope test nope")
 def test_uses_the_provided_config_when_available(terminal):
