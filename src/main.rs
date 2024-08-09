@@ -47,15 +47,6 @@ pub enum RunError {
     LoggingStart { source: io::Error, path: String },
 }
 
-// TODO Replace all panics, unwraps and similar with something
-// that will not crash the program. It is important not to crash
-// in order to uninitialize the terminal and leave it in a good
-// state.
-
-// TODO Document the general architecture of the application.
-// This should probably wait until the architecture is at least
-// somewhat stable.
-
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 struct Args {
@@ -69,10 +60,6 @@ struct Args {
 /// Load the [Config] from the given path. If path is [None], the default
 /// value for [Config] is returned.
 fn load_config(path: Option<PathBuf>) -> Result<Config, RunError> {
-    // TODO Validate the configuration before continuing.
-    // It is possible that some things will be validated automatically,
-    // due to used types, but at least some things need to be validated
-    // manually.
     if let Some(path) = path {
         let file = File::open(path.clone()) //
             .context(ConfigOpenSnafu { path: path.clone() })?;

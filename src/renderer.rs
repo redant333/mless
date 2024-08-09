@@ -69,10 +69,6 @@ pub struct Renderer<T: Write + ?Sized> {
     pub output: T,
 }
 
-// TODO Currently, if data is longer than the screen, it will be drawn until the end and cause
-// scrolling in the terminal. This needs to be fixed so that only the first screen is drawn and
-// the rest is ignored.
-
 impl<T: Write + ?Sized> Renderer<T> {
     /// Render the given data and draw instructions to the terminal.
     ///
@@ -111,9 +107,6 @@ impl<T: Write + ?Sized> Renderer<T> {
         let mut overlay_chars: VecDeque<char> = VecDeque::new();
         let mut color_stack: Vec<(Color, Color)> = vec![];
         let mut refresh_colors = false;
-
-        // TODO ANSI sequences can happen inside of highlights. Make sure that styled
-        // segments are rendered correctly in these situations
 
         // Ignore the terminating new line if present
         let data_range = match data.as_bytes().last() {

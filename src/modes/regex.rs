@@ -56,10 +56,6 @@ impl RegexMode {
     ) -> Self {
         let mut hits = vec![];
 
-        // TODO This will assign different hints to multiple appearences of the same
-        // match text. Instead, every occurrence of the same match should get the
-        // same hint since it will give the same output.
-
         // All ANSI color sequences should be ignored while matching
         let ignore_regex = Regex::new("\x1b\\[[^m]+m").unwrap();
 
