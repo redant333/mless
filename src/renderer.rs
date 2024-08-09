@@ -80,6 +80,8 @@ impl<T: Write + ?Sized> Renderer<T> {
     pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) {
         trace!("Rendering draw instructions {:#?}", draw_instructions);
 
+        // Perform rendering into a buffer first, to avoid any blinking issues
+        let mut buffer: Vec<u8> = vec![];
         self.output.queue(Clear(ClearType::All)).unwrap();
 
         for instruction in draw_instructions {
@@ -88,11 +90,12 @@ impl<T: Write + ?Sized> Renderer<T> {
                     styled_segments,
                     text_overlays,
                 } => {
-                    self.draw_styled_data(data, styled_segments, text_overlays);
+                    self.draw_styled_data(&mut buffer, data, styled_segments, text_overlays);
                 }
             }
         }
 
+        self.output.write_all(&buffer).unwrap();
         self.output.flush().unwrap();
     }
 
@@ -100,6 +103,7 @@ impl<T: Write + ?Sized> Renderer<T> {
     /// and terminal width overflow.
     fn draw_styled_data(
         &mut self,
+        buffer: &mut Vec<u8>,
         data: &str,
         styled_segments: &[StyledSegment],
         text_overlays: &[DataOverlay],
@@ -148,14 +152,14 @@ impl<T: Write + ?Sized> Renderer<T> {
             // Change color if needed
             if refresh_colors {
                 if let Some((background, foreground)) = color_stack.last() {
-                    self.output
+                    buffer
                         .queue(style::SetForegroundColor(*foreground))
                         .unwrap();
-                    self.output
+                    buffer
                         .queue(style::SetBackgroundColor(*background))
                         .unwrap();
                 } else {
-                    self.output.queue(style::ResetColor).unwrap();
+                    buffer.queue(style::ResetColor).unwrap();
                 }
 
                 refresh_colors = false;
@@ -168,9 +172,9 @@ impl<T: Write + ?Sized> Renderer<T> {
             };
 
             if char == '\n' {
-                self.output.queue(Print('\r')).unwrap();
+                buffer.queue(Print('\r')).unwrap();
             }
-            self.output.queue(Print(char)).unwrap();
+            buffer.queue(Print(char)).unwrap();
         }
     }
 
