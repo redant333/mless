@@ -27,13 +27,13 @@ def test_uses_the_provided_config_when_available(terminal):
     msg_no_output = "Expected input or mark hint, found nothing"
 
     assert terminal.get_string_at(0, 0, 1) != " ", msg_no_output
-    assert terminal.get_background_at(0, 0) != tt.ColorNamed.DEFAULT, msg_marked
+    assert terminal.get_background_at(0, 0) != tt.Color16.DEFAULT, msg_marked
 
     assert terminal.get_string_at(0, 5, 1) != " ", msg_no_output
-    assert terminal.get_background_at(0, 5) == tt.ColorNamed.DEFAULT, msg_not_marked
+    assert terminal.get_background_at(0, 5) == tt.Color16.DEFAULT, msg_not_marked
 
     assert terminal.get_string_at(0, 10, 1) != " ", msg_no_output
-    assert terminal.get_background_at(0, 10) != tt.ColorNamed.DEFAULT, msg_marked
+    assert terminal.get_background_at(0, 10) != tt.Color16.DEFAULT, msg_marked
 
     assert terminal.get_string_at(0, 15, 1) != " ", msg_no_output
-    assert terminal.get_background_at(0, 15) == tt.ColorNamed.DEFAULT, msg_not_marked
+    assert terminal.get_background_at(0, 15) == tt.Color16.DEFAULT, msg_not_marked
