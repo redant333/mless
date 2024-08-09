@@ -61,7 +61,5 @@ picker_ids=`init_side_window`
 picker_pane_id=$(echo "$picker_ids" | cut -f1 -d:)
 side_window_id=$(echo "$picker_ids" | cut -f2 -d:)
 
-tmux swap-pane -s "$selection_source_pane_id" -t "$picker_pane_id"
-
 cmd="$(dirname $0)/mless_tmux_stage_2.sh '$selection_source_pane_id' '$picker_pane_id' '$side_window_id' '$capture_file'"
 exec_in_pane "$picker_pane_id" "$cmd"

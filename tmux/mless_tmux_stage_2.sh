@@ -7,6 +7,9 @@ side_window_id=$3
 select_from_file=$4
 
 cmd="mouseless-selector $select_from_file"
+
+tmux swap-pane -s "$selection_source_pane_id" -t "$picker_pane_id"
+
 $cmd | tmux loadb -b mless-buff - && tmux paste-buffer -b mless-buff -t "$selection_source_pane_id"
 
 tmux swap-pane -s "$picker_pane_id" -t "$selection_source_pane_id"
