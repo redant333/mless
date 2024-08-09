@@ -1,10 +1,9 @@
 """Tests for using regex mode."""
 
+import pytest
 import pytest_tuitest as tt
-from utils import config_path, STATUS_OK
-
-COLOR_RED = "\033[0;31m"
-COLOR_RESET = "\033[0m"
+from pytest_tuitest.styles import Style
+from utils import COLOR_RED, ANSI_RESET, STYLE_BOLD, config_path, STATUS_OK
 
 
 @tt.with_stdin("test, test indeed")
@@ -25,7 +24,7 @@ def test_can_select_from_simple_text(terminal):
     assert stderr == "", "Expected empty stderr, got something"
 
 
-@tt.with_stdin(f"{COLOR_RED}test,{COLOR_RESET} test indeed")
+@tt.with_stdin(f"{COLOR_RED}test,{ANSI_RESET} test indeed")
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])
 def test_can_select_from_colored_text(terminal):
     """Verify that colored text does not interfere with selecting."""
@@ -105,3 +104,31 @@ def test_correctly_renders_text_of_same_height_as_terminal(terminal):
 
     msg = "The last line was not rendered correctly"
     assert terminal.get_string_at(9, 0, 1) == "9", msg
+
+
+@pytest.mark.skip("TODO To be implemented")
+@tt.with_stdin(f"things {STYLE_BOLD}stuff test stuff{ANSI_RESET} things")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_highlights_do_not_inherit_style_from_data(terminal):
+    """Verify that highlights have style independent from the surrounding data."""
+    terminal.wait_for_stable_output()
+
+    highlight_positions = [13, 14, 15, 16]
+
+    msg = "Style of character inside highlight not as expected"
+    for column in highlight_positions:
+        assert not terminal.has_style_at(Style.BOLD, 0, column), msg
+
+
+@pytest.mark.skip("TODO To be implemented")
+@tt.with_stdin(f"things {STYLE_BOLD}stuff test stuff{ANSI_RESET} things")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_highlights_do_not_disrupt_style_of_data(terminal):
+    """Verify that highlights do not affect the style of data they are not covering."""
+    terminal.wait_for_stable_output()
+
+    msg = "Character before the highlight expected to be bold"
+    assert terminal.has_style_at(Style.BOLD, 0, 12), msg
+
+    msg = "Character after the highlight expected to be bold"
+    assert terminal.has_style_at(Style.BOLD, 0, 17), msg

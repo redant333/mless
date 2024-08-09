@@ -5,6 +5,11 @@ from pathlib import Path
 STATUS_ERROR = 255
 STATUS_OK = 0
 
+COLOR_RED = "\033[0;31m"
+STYLE_BOLD = "\033[1m"
+
+ANSI_RESET = "\033[0m"
+
 
 def config_path(config_name):
     """Return the full path to the supporting config given the supporting config name."""
