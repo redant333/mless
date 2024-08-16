@@ -2,6 +2,7 @@
 
 import pytest
 import pytest_tuitest as tt
+from pytest_tuitest.colors import Color16
 from pytest_tuitest.styles import Style
 from utils import COLOR_RED, ANSI_RESET, STYLE_BOLD, config_path, STATUS_OK
 
@@ -132,3 +133,21 @@ def test_highlights_do_not_disrupt_style_of_data(terminal):
 
     msg = "Character after the highlight expected to be bold"
     assert terminal.has_style_at(Style.BOLD, 0, 17), msg
+
+
+@tt.with_stdin("test and test and more test")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_assigns_same_hint_to_occurrences_of_the_same_word(terminal):
+    """Verify that the occurrences of the same match get the same hint."""
+    terminal.wait_for_stable_output()
+
+    # Make sure that the color is actually shown
+    hint_color = terminal.get_background_at(0, 0)
+    msg = "Expected hint to be shown, but background color is still DEFAULT"
+    assert hint_color != Color16.DEFAULT, msg
+
+    hint_text = terminal.get_string_at(0, 0, 1)
+
+    msg = "Expected hint to be same as for the first word, found something else"
+    assert terminal.get_string_at(0, 9, 1) == hint_text, msg
+    assert terminal.get_string_at(0, 23, 1) == hint_text, msg
