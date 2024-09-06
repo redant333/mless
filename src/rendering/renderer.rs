@@ -1,64 +1,21 @@
-//! Rendering to the terminal.
-use std::{collections::VecDeque, io::Write, ops::Range};
+//!Renderer struct that performs the actual rendering to the terminal.
+use std::{collections::VecDeque, io::Write};
 
 use crossterm::{
     cursor,
-    style::{self, Color, Print},
+    style::{self, Print},
     terminal::{
         disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
     },
     QueueableCommand,
 };
-use log::{info, trace};
-use regex::Regex;
+use log::trace;
 
-/// Struct to describe text style.
-///
-/// Used in [Draw].
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct TextStyle {
-    pub foreground: Color,
-    pub background: Color,
-}
+use super::ansi_sequence_extractor::AnsiSequenceExtractor;
+use super::{DataOverlay, StyledSegment, TextStyle};
 
-/// Struct to describe a styled segment of data.
-///
-/// Used in [Draw::StyledData].
-#[derive(Debug)]
-pub struct StyledSegment {
-    /// Byte offset of the start of the segment from the start of data.
-    pub start: usize,
-    /// Length of the segment in bytes.
-    pub length: usize,
-    /// Style of the segment.
-    pub style: TextStyle,
-}
-/// Struct to describe text that is drawn over the data.
-///
-/// Used in [Draw::StyledData].
-#[derive(Debug)]
-pub struct DataOverlay {
-    // The text to draw.
-    pub text: String,
-    /// Byte offset from the start of data where to start drawing the text.
-    pub location: usize,
-}
-
-/// Instruction to [Renderer] about what should be drawn to the screen.
-#[derive(Debug)]
-pub enum Draw {
-    /// Draw the data, i.e. the text from which the selection is performed
-    /// with parts of data in different styles and text drawn over some parts.
-    ///
-    /// If some of the segments are overlapping, the last one specified takes precedence.
-    StyledData {
-        /// The segments of the data to style differently than the source data.
-        styled_segments: Vec<StyledSegment>,
-        /// Parts of the data to replace with the given text.
-        text_overlays: Vec<DataOverlay>,
-    },
-}
+use super::Draw;
 
 /// The struct intended for rendering everything to the terminal.
 ///
@@ -230,60 +187,5 @@ impl<T: Write + ?Sized> Renderer<T> {
         disable_raw_mode()?;
 
         Ok(())
-    }
-}
-
-struct AnsiSequenceEntry {
-    range: Range<usize>,
-    content: String,
-}
-
-// A struct to extract and store all ANSI sequences in a string
-struct AnsiSequenceExtractor {
-    ansi_sequences: Vec<AnsiSequenceEntry>,
-}
-
-impl AnsiSequenceExtractor {
-    // Create a new extractor from the given string
-    fn new(data: &str) -> Self {
-        let ansi_regex = Regex::new("\x1b\\[[^m]+m").unwrap();
-        let ansi_sequences = ansi_regex
-            .captures_iter(data)
-            .map(|captures| {
-                let regex_match = captures.get(0).unwrap();
-
-                info!(
-                    "Found ANSI sequence ({}, {})",
-                    regex_match.start(),
-                    regex_match.end()
-                );
-                AnsiSequenceEntry {
-                    range: regex_match.start()..regex_match.end(),
-                    content: regex_match.as_str().to_string(),
-                }
-            })
-            .collect();
-
-        Self { ansi_sequences }
-    }
-
-    // Check if the given byte location is inside any of the extracted
-    // ANSI sequences
-    fn is_inside_sequence(&self, location: usize) -> bool {
-        self.ansi_sequences
-            .iter()
-            .any(|sequence| sequence.range.contains(&location))
-    }
-
-    // Get an iterator of all extracted ANSI sequences that end before (not including) the
-    // given byte location
-    fn get_all_sequences_before(&self, location: usize) -> Box<dyn Iterator<Item = &str> + '_> {
-        let sequences = self
-            .ansi_sequences
-            .iter()
-            .take_while(move |sequence| sequence.range.end < location)
-            .map(|sequence| sequence.content.as_str());
-
-        Box::new(sequences)
     }
 }

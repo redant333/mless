@@ -15,7 +15,7 @@ use crate::{
     configuration,
     hints::HintGenerator,
     input_handler::KeyPress,
-    renderer::{DataOverlay, Draw, StyledSegment, TextStyle},
+    rendering::{DataOverlay, Draw, StyledSegment, TextStyle},
 };
 
 use super::{Mode, ModeEvent};

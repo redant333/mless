@@ -1,5 +1,5 @@
 //! Different selection modes.
-use crate::{input_handler::KeyPress, renderer::Draw};
+use crate::{input_handler::KeyPress, rendering::Draw};
 
 mod regex;
 pub use regex::RegexMode;
@@ -12,7 +12,7 @@ pub trait Mode {
     /// state of the mode.
     fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeEvent>;
 
-    /// Specify the draw instructions for [crate::renderer::Renderer].
+    /// Specify the draw instructions for [crate::rendering::Renderer].
     ///
     /// Note that the renderer does not display anything if the returned
     /// vector is empty.

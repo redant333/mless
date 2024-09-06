@@ -3,7 +3,7 @@ mod hints;
 mod input_handler;
 mod logging;
 mod modes;
-mod renderer;
+mod rendering;
 
 use clap::Parser;
 use configuration::Config;
@@ -12,7 +12,7 @@ use input_handler::{Action, InputHandler};
 use log::{debug, info};
 use logging::initialize_logging;
 use modes::{Mode, ModeEvent, RegexMode};
-use renderer::Renderer;
+use rendering::Renderer;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::PathBuf;
