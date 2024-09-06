@@ -1,5 +1,5 @@
 //! Rendering to the terminal.
-use std::{collections::VecDeque, io::Write};
+use std::{collections::VecDeque, io::Write, ops::Range};
 
 use crossterm::{
     cursor,
@@ -10,12 +10,13 @@ use crossterm::{
     },
     QueueableCommand,
 };
-use log::trace;
+use log::{info, trace};
+use regex::Regex;
 
 /// Struct to describe text style.
 ///
 /// Used in [Draw].
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TextStyle {
     pub foreground: Color,
     pub background: Color,
@@ -105,8 +106,8 @@ impl<T: Write + ?Sized> Renderer<T> {
         text_overlays: &[DataOverlay],
     ) {
         let mut overlay_chars: VecDeque<char> = VecDeque::new();
-        let mut color_stack: Vec<(Color, Color)> = vec![];
-        let mut refresh_colors = false;
+        let ansi_sequences = AnsiSequenceExtractor::new(data);
+        let mut last_intra_segment_style = None;
 
         // Ignore the terminating new line if present
         let data_range = match data.as_bytes().last() {
@@ -114,25 +115,11 @@ impl<T: Write + ?Sized> Renderer<T> {
             _ => 0..data.len(),
         };
 
+        for segment in styled_segments {
+            trace!("Styled segment to draw {segment:?}")
+        }
+
         for (byte_position, char) in data[data_range].char_indices() {
-            // Handle end of segment
-            styled_segments
-                .iter()
-                .filter(|s| (s.start + s.length) == byte_position)
-                .for_each(|_| {
-                    color_stack.pop();
-                    refresh_colors = true;
-                });
-
-            // Handle start of segment
-            styled_segments
-                .iter()
-                .filter(|s| s.start == byte_position)
-                .for_each(|segment| {
-                    color_stack.push((segment.style.background, segment.style.foreground));
-                    refresh_colors = true;
-                });
-
             // Handle start of overlay
             let overlay = text_overlays
                 .iter()
@@ -142,32 +129,83 @@ impl<T: Write + ?Sized> Renderer<T> {
                 text.chars().for_each(|char| overlay_chars.push_back(char));
             }
 
-            // Change color if needed
-            if refresh_colors {
-                if let Some((background, foreground)) = color_stack.last() {
-                    buffer
-                        .queue(style::SetForegroundColor(*foreground))
-                        .unwrap();
-                    buffer
-                        .queue(style::SetBackgroundColor(*background))
-                        .unwrap();
+            // Style from segments
+            let intra_segment_style = styled_segments.iter().rev().find_map(|segment| {
+                if byte_position >= segment.start
+                    && byte_position < (segment.start + segment.length)
+                {
+                    Some(segment.style)
                 } else {
-                    buffer.queue(style::ResetColor).unwrap();
+                    None
                 }
+            });
 
-                refresh_colors = false;
+            update_style(
+                &last_intra_segment_style,
+                &intra_segment_style,
+                &ansi_sequences,
+                buffer,
+                byte_position,
+            );
+            last_intra_segment_style = intra_segment_style;
+
+            // Do not print ANSI sequences inside of styled segments
+            let inside_styled_segment = intra_segment_style.is_some();
+            let current_char_is_ansi_sequence = ansi_sequences.is_inside_sequence(byte_position);
+
+            if !(inside_styled_segment && current_char_is_ansi_sequence) {
+                // Print character
+                let char = match overlay_chars.pop_front() {
+                    Some(overlay_char) => overlay_char,
+                    None => char,
+                };
+
+                if char == '\n' {
+                    buffer.queue(Print('\r')).unwrap();
+                }
+                buffer.queue(Print(char)).unwrap();
             }
+        }
 
-            // Print character
-            let char = match overlay_chars.pop_front() {
-                Some(overlay_char) => overlay_char,
-                None => char,
-            };
+        // Update the terminal style when switching in and out of styled segments
+        fn update_style(
+            last_segment_style: &Option<TextStyle>,
+            segment_style: &Option<TextStyle>,
+            ansi_sequences: &AnsiSequenceExtractor,
+            buffer: &mut Vec<u8>,
+            current_position: usize,
+        ) {
+            use style::*;
 
-            if char == '\n' {
-                buffer.queue(Print('\r')).unwrap();
+            match (last_segment_style, segment_style) {
+                (Some(_), None) => {
+                    // Just exited from a styled segment, restore any styling disturbed by it
+                    buffer.queue(SetAttribute(Attribute::Reset)).unwrap();
+                    buffer.queue(ResetColor).unwrap();
+
+                    // In order to restore the styling, this applies all the sequences
+                    // from the beginning of the data again. This is a fairly silly approach
+                    // but it means that the code does not need to worry about which styles
+                    // overried which and similar.
+                    for sequence in ansi_sequences.get_all_sequences_before(current_position) {
+                        buffer.queue(Print(sequence)).unwrap();
+                    }
+                }
+                (None, Some(style)) => {
+                    // Just entered a segment, apply its style
+                    buffer.queue(SetAttribute(Attribute::Reset)).unwrap();
+                    buffer.queue(SetForegroundColor(style.foreground)).unwrap();
+                    buffer.queue(SetBackgroundColor(style.background)).unwrap();
+                }
+                (Some(last_style), Some(style)) if last_style != style => {
+                    // Just switched from one segment to another, apply the style
+                    // of the new segment
+                    buffer.queue(SetAttribute(Attribute::Reset)).unwrap();
+                    buffer.queue(SetForegroundColor(style.foreground)).unwrap();
+                    buffer.queue(SetBackgroundColor(style.background)).unwrap();
+                }
+                _ => (),
             }
-            buffer.queue(Print(char)).unwrap();
         }
     }
 
@@ -192,5 +230,60 @@ impl<T: Write + ?Sized> Renderer<T> {
         disable_raw_mode()?;
 
         Ok(())
+    }
+}
+
+struct AnsiSequenceEntry {
+    range: Range<usize>,
+    content: String,
+}
+
+// A struct to extract and store all ANSI sequences in a string
+struct AnsiSequenceExtractor {
+    ansi_sequences: Vec<AnsiSequenceEntry>,
+}
+
+impl AnsiSequenceExtractor {
+    // Create a new extractor from the given string
+    fn new(data: &str) -> Self {
+        let ansi_regex = Regex::new("\x1b\\[[^m]+m").unwrap();
+        let ansi_sequences = ansi_regex
+            .captures_iter(data)
+            .map(|captures| {
+                let regex_match = captures.get(0).unwrap();
+
+                info!(
+                    "Found ANSI sequence ({}, {})",
+                    regex_match.start(),
+                    regex_match.end()
+                );
+                AnsiSequenceEntry {
+                    range: regex_match.start()..regex_match.end(),
+                    content: regex_match.as_str().to_string(),
+                }
+            })
+            .collect();
+
+        Self { ansi_sequences }
+    }
+
+    // Check if the given byte location is inside any of the extracted
+    // ANSI sequences
+    fn is_inside_sequence(&self, location: usize) -> bool {
+        self.ansi_sequences
+            .iter()
+            .any(|sequence| sequence.range.contains(&location))
+    }
+
+    // Get an iterator of all extracted ANSI sequences that end before (not including) the
+    // given byte location
+    fn get_all_sequences_before(&self, location: usize) -> Box<dyn Iterator<Item = &str> + '_> {
+        let sequences = self
+            .ansi_sequences
+            .iter()
+            .take_while(move |sequence| sequence.range.end < location)
+            .map(|sequence| sequence.content.as_str());
+
+        Box::new(sequences)
     }
 }

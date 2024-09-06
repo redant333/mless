@@ -1,6 +1,5 @@
 """Tests for using regex mode."""
 
-import pytest
 import pytest_tuitest as tt
 from pytest_tuitest.colors import Color16
 from pytest_tuitest.styles import Style
@@ -107,7 +106,6 @@ def test_correctly_renders_text_of_same_height_as_terminal(terminal):
     assert terminal.get_string_at(9, 0, 1) == "9", msg
 
 
-@pytest.mark.skip("TODO To be implemented")
 @tt.with_stdin(f"things {STYLE_BOLD}stuff test stuff{ANSI_RESET} things")
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])
 def test_highlights_do_not_inherit_style_from_data(terminal):
@@ -121,7 +119,6 @@ def test_highlights_do_not_inherit_style_from_data(terminal):
         assert not terminal.has_style_at(Style.BOLD, 0, column), msg
 
 
-@pytest.mark.skip("TODO To be implemented")
 @tt.with_stdin(f"things {STYLE_BOLD}stuff test stuff{ANSI_RESET} things")
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])
 def test_highlights_do_not_disrupt_style_of_data(terminal):
