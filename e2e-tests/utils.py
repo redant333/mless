@@ -8,6 +8,8 @@ STATUS_OK = 0
 COLOR_RED = "\033[0;31m"
 STYLE_BOLD = "\033[1m"
 
+COLOR_BG_BLUE = "\033[44m"
+
 ANSI_RESET = "\033[0m"
 
 

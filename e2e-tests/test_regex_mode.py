@@ -3,7 +3,14 @@
 import pytest_tuitest as tt
 from pytest_tuitest.colors import Color16
 from pytest_tuitest.styles import Style
-from utils import COLOR_RED, ANSI_RESET, STYLE_BOLD, config_path, STATUS_OK
+from utils import (
+    COLOR_BG_BLUE,
+    COLOR_RED,
+    ANSI_RESET,
+    STYLE_BOLD,
+    config_path,
+    STATUS_OK,
+)
 
 
 @tt.with_stdin("test, test indeed")
@@ -130,6 +137,35 @@ def test_highlights_do_not_disrupt_style_of_data(terminal):
 
     msg = "Character after the highlight expected to be bold"
     assert terminal.has_style_at(Style.BOLD, 0, 17), msg
+
+
+@tt.with_stdin(f"things {COLOR_RED}{COLOR_BG_BLUE}stuff test stuff{ANSI_RESET} things")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_highlights_do_not_inherit_color_from_data(terminal):
+    """Verify that highlights have color independent from the surrounding data."""
+    terminal.wait_for_stable_output()
+
+    highlight_positions = [13, 14, 15, 16]
+
+    msg = "Color of character inside highlight not as expected"
+    for column in highlight_positions:
+        assert terminal.get_background_at(0, column) != Color16.RED, msg
+        assert terminal.get_foreground_at(0, column) != Color16.BLUE, msg
+
+
+@tt.with_stdin(f"things {COLOR_RED}{COLOR_BG_BLUE}stuff test stuff{ANSI_RESET} things")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_highlights_do_not_disrupt_color_of_data(terminal):
+    """Verify that highlights do not affect the color of data they are not covering."""
+    terminal.wait_for_stable_output()
+
+    msg = "Character color before the highlight not as expected"
+    assert terminal.get_foreground_at(0, 12) == Color16.RED, msg
+    assert terminal.get_background_at(0, 12) == Color16.BLUE, msg
+
+    msg = "Character color after the highlight not as expected"
+    assert terminal.get_foreground_at(0, 17) == Color16.RED, msg
+    assert terminal.get_background_at(0, 17) == Color16.BLUE, msg
 
 
 @tt.with_stdin("test and test and more test")
