@@ -82,11 +82,14 @@ impl RegexMode {
                 .filter_map(|capture| {
                     let regex_match = capture.get(0)?;
 
-                    let start_before_ignored =
+                    let start_in_original_data =
                         get_original_index(&ignore_ranges, regex_match.start());
+                    let end_in_original_data =
+                        get_original_index(&ignore_ranges, regex_match.end());
+
                     Some(Hit {
-                        start: start_before_ignored,
-                        length: regex_match.as_str().len(),
+                        start: start_in_original_data,
+                        length: end_in_original_data - start_in_original_data,
                         text: regex_match.as_str().to_string(),
                     })
                 })
