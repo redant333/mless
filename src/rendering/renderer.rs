@@ -124,7 +124,7 @@ impl<T: Write + ?Sized> Renderer<T> {
             }
         }
 
-        // Update the terminal style when switching in and out of styled segments
+        /// Update the terminal style when switching in and out of styled segments
         fn update_style(
             last_segment_style: &Option<TextStyle>,
             segment_style: &Option<TextStyle>,

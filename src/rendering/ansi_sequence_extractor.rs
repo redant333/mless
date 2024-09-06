@@ -5,19 +5,19 @@ use std::ops::Range;
 use log::info;
 use regex::Regex;
 
-// A struct to extract and store all ANSI sequences in a string
+/// A struct to extract and store all ANSI sequences in a string
 pub struct AnsiSequenceExtractor {
     ansi_sequences: Vec<AnsiSequenceEntry>,
 }
 
-// One extracted ANSI sequence
+/// One extracted ANSI sequence
 struct AnsiSequenceEntry {
     range: Range<usize>,
     content: String,
 }
 
 impl AnsiSequenceExtractor {
-    // Create a new extractor from the given string
+    /// Create a new extractor from the given string
     pub fn new(data: &str) -> Self {
         let ansi_regex = Regex::new("\x1b\\[[^m]+m").unwrap();
         let ansi_sequences = ansi_regex
@@ -40,16 +40,16 @@ impl AnsiSequenceExtractor {
         Self { ansi_sequences }
     }
 
-    // Check if the given byte location is inside any of the extracted
-    // ANSI sequences
+    /// Check if the given byte location is inside any of the extracted
+    /// ANSI sequences
     pub fn is_inside_sequence(&self, location: usize) -> bool {
         self.ansi_sequences
             .iter()
             .any(|sequence| sequence.range.contains(&location))
     }
 
-    // Get an iterator of all extracted ANSI sequences that end before (not including) the
-    // given byte location
+    /// Get an iterator of all extracted ANSI sequences that end before (not including) the
+    /// given byte location
     pub fn get_all_sequences_before(&self, location: usize) -> Box<dyn Iterator<Item = &str> + '_> {
         let sequences = self
             .ansi_sequences

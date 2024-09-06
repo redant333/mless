@@ -33,7 +33,7 @@ pub struct DataOverlay {
     pub location: usize,
 }
 
-/// Instruction to [Renderer] about what should be drawn to the screen.
+/// Instruction to [super::Renderer] about what should be drawn to the screen.
 #[derive(Debug)]
 pub enum Draw {
     /// Draw the data, i.e. the text from which the selection is performed
