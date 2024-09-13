@@ -73,11 +73,24 @@ function capture_pane() {
     tmux capture-pane -e -J -p -t "$pane_id" -E "$end_capture" -S "$start_capture" > "$out_path"
 }
 
+###############################################################################
+# Execute mless, paste the selected text and clean up the side window.
+# NOTE: This is not executed in the main process as the rest of the script!
+# It is intended to be executed independently in a pane.
+#
+# Arguments:
+#   ID of the original pane from which the selection is performed.
+#   ID of the pane in which this function and mless are executing.
+#   ID of the side window.
+#   ID of the file that contains the capture of the original pane.
+###############################################################################
 function execute_mless() {
-    selection_source_pane_id=$1
-    picker_pane_id=$2
-    side_window_id=$3
-    select_from_file=$4
+    local -r BUFFER_NAME="mless-buff"
+
+    local selection_source_pane_id=$1
+    local picker_pane_id=$2
+    local side_window_id=$3
+    local select_from_file=$4
 
     cmd="mouseless-selector $select_from_file"
 
@@ -86,7 +99,7 @@ function execute_mless() {
     selected_text=$($cmd)
 
     if [[ "$selected_text" != "" ]]; then
-        echo -n "$selected_text" | tmux loadb -b mless-buff - && tmux paste-buffer -b mless-buff -t "$selection_source_pane_id"
+        echo -n "$selected_text" | tmux loadb -b "$BUFFER_NAME" - && tmux paste-buffer -b "$BUFFER_NAME" -t "$selection_source_pane_id"
     fi
 
     tmux swap-pane -s "$picker_pane_id" -t "$selection_source_pane_id"
