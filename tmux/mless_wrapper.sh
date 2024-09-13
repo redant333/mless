@@ -52,6 +52,26 @@ function exec_in_pane() {
     tmux send-keys -t $pane_id Enter
 }
 
+function execute_mless() {
+    selection_source_pane_id=$1
+    picker_pane_id=$2
+    side_window_id=$3
+    select_from_file=$4
+
+    cmd="mouseless-selector $select_from_file"
+
+    tmux swap-pane -s "$selection_source_pane_id" -t "$picker_pane_id"
+
+    selected_text=$($cmd)
+
+    if [[ "$selected_text" != "" ]]; then
+        echo -n "$selected_text" | tmux loadb -b mless-buff - && tmux paste-buffer -b mless-buff -t "$selection_source_pane_id"
+    fi
+
+    tmux swap-pane -s "$picker_pane_id" -t "$selection_source_pane_id"
+    tmux kill-window -t "$side_window_id"
+}
+
 capture_file="/tmp/mless_captured"
 selection_source_pane_id=$(tmux list-panes -F "#{pane_id}:#{?pane_active,active,nope}" | grep active | cut -d: -f1)
 
@@ -61,5 +81,8 @@ picker_ids=`init_side_window`
 picker_pane_id=$(echo "$picker_ids" | cut -f1 -d:)
 side_window_id=$(echo "$picker_ids" | cut -f2 -d:)
 
-cmd="$(dirname $0)/mless_tmux_stage_2.sh '$selection_source_pane_id' '$picker_pane_id' '$side_window_id' '$capture_file'"
+print_stuff_text=$(declare -f execute_mless | tr '\n' ' ' | sed 's/\}/; }/')
+args="\"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$capture_file\""
+cmd="bash -c '$print_stuff_text ; execute_mless $args'"
+
 exec_in_pane "$picker_pane_id" "$cmd"
