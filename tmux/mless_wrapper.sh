@@ -73,14 +73,6 @@ function capture_pane() {
     tmux capture-pane -e -J -p -t "$pane_id" -E "$end_capture" -S "$start_capture" > "$out_path"
 }
 
-function exec_in_pane() {
-    local pane_id=$1
-    local command=$2
-
-    tmux send-keys -t $pane_id "$command"
-    tmux send-keys -t $pane_id Enter
-}
-
 function execute_mless() {
     selection_source_pane_id=$1
     picker_pane_id=$2
@@ -115,4 +107,4 @@ print_stuff_text=$(declare -f execute_mless | tr '\n' ' ' | sed 's/\}/; }/')
 args="\"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$capture_file\""
 cmd="bash -c '$print_stuff_text ; execute_mless $args'"
 
-exec_in_pane "$picker_pane_id" "$cmd"
+tmux respawn-pane -k -t "$picker_pane_id" bash -c "$print_stuff_text ; execute_mless $args"
