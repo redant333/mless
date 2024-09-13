@@ -3,23 +3,42 @@
 # https://github.com/pawel-wiejacha/tmux-picker/tree/827845f89044fbfb3cd73905f000340bbbda663a
 set -ue
 
+readonly SIDE_WINDOW_NAME="[mless]"
+
+###############################################################################
+# Create a window in the background and create a pane in it with the same
+# dimensions as the currently active pane.
+#
+# To achieve the current pane dimensions, additional panes will be created.
+# Each of the created panes is initialized with a /bin/sh process.
+#
+# Arguments:
+#   Name for the created window.
+# Outputs:
+#   IDs of the created window and pane, separated by a colon.
+###############################################################################
 function init_side_window() {
-    local picker_ids=$(tmux new-window -F "#{pane_id}:#{window_id}" -P -d -n "[picker]" "/bin/sh")
-    local picker_pane_id=$(echo "$picker_ids" | cut -f1 -d:)
-    local picker_window_id=$(echo "$picker_ids" | cut -f2 -d:)
+    local -r WINDOW_NAME="$1"
+    local -r PANE_PROCESS="/bin/sh"
 
-    local current_size=$(tmux list-panes -F "#{pane_width}:#{pane_height}:#{?pane_active,active,nope}" | grep active)
-    local current_width=$(echo "$current_size" | cut -f1 -d:)
-    local current_height=$(echo "$current_size" | cut -f2 -d:)
+    local pane_window_ids pane_id
+    pane_window_ids=$(tmux new-window -F "#{pane_id}:#{window_id}" -P -d -n "$WINDOW_NAME" "$PANE_PROCESS")
+    pane_id=$(cut -f1 -d: <<< "$pane_window_ids")
 
-    local current_window_size=$(tmux list-windows -F "#{window_width}:#{window_height}:#{?window_active,active,nope}" | grep active)
-    local current_window_width=$(echo "$current_window_size" | cut -f1 -d:)
-    local current_window_height=$(echo "$current_window_size" | cut -f2 -d:)
+    local current_pane_size current_pane_width current_pane_height
+    current_pane_size=$(tmux list-panes -F "#{pane_width}:#{pane_height}:#{?pane_active,active,nope}" | grep active)
+    current_pane_width=$(cut -f1 -d: <<< "$current_pane_size")
+    current_pane_height=$(cut -f2 -d: <<< "$current_pane_size")
 
-    tmux split-window -d -t "$picker_pane_id" -h -l "$((current_window_width - current_width - 1))" '/bin/sh'
-    tmux split-window -d -t "$picker_pane_id" -l "$((current_window_height - current_height - 1))" '/bin/sh'
+    local current_window_size current_window_width current_window_height
+    current_window_size=$(tmux list-windows -F "#{window_width}:#{window_height}:#{?window_active,active,nope}" | grep active)
+    current_window_width=$(cut -f1 -d: <<< "$current_window_size")
+    current_window_height=$(cut -f2 -d: <<< "$current_window_size")
 
-    echo "$picker_ids"
+    tmux split-window -d -t "$pane_id" -h -l "$((current_window_width - current_pane_width - 1))" '/bin/sh'
+    tmux split-window -d -t "$pane_id" -l "$((current_window_height - current_pane_height - 1))" '/bin/sh'
+
+    echo "$pane_window_ids"
 }
 
 function capture_pane() {
@@ -77,7 +96,8 @@ selection_source_pane_id=$(tmux list-panes -F "#{pane_id}:#{?pane_active,active,
 
 capture_pane "$selection_source_pane_id" "$capture_file"
 
-picker_ids=`init_side_window`
+picker_ids=$(init_side_window "$SIDE_WINDOW_NAME")
+echo "<$picker_ids>" > /tmp/debug
 picker_pane_id=$(echo "$picker_ids" | cut -f1 -d:)
 side_window_id=$(echo "$picker_ids" | cut -f2 -d:)
 
