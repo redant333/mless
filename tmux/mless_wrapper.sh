@@ -41,17 +41,27 @@ function init_side_window() {
     echo "$pane_window_ids"
 }
 
+###############################################################################
+# Capture the contents of the given pane and save them in a file at the given
+# path. If the file already exists, its contents will be overwritten.
+#
+# Arguments:
+#   ID of the path to capture.
+#   Path to the file where the contents will be saved.
+###############################################################################
 function capture_pane() {
     local pane_id=$1
     local out_path=$2
-    local pane_info=$(tmux list-panes -s -F "#{pane_id}:#{pane_height}:#{scroll_position}:#{?pane_in_mode,1,0}" | grep "^$pane_id")
 
-    local pane_height=$(echo $pane_info | cut -d: -f2)
-    local pane_scroll_position=$(echo $pane_info | cut -d: -f3)
-    local pane_in_copy_mode=$(echo $pane_info | cut -d: -f4)
+    local pane_info
+    pane_info=$(tmux list-panes -s -F "#{pane_id}:#{pane_height}:#{scroll_position}:#{?pane_in_mode,1,0}" | grep "^$pane_id")
+
+    local pane_height pane_scroll_position pane_in_copy_mode
+    pane_height=$(cut -d: -f2 <<< "$pane_info")
+    pane_scroll_position=$(cut -d: -f3 <<< "$pane_info")
+    pane_in_copy_mode=$(cut -d: -f4 <<< "$pane_info")
 
     local start_capture=""
-
     if [[ "$pane_in_copy_mode" == "1" ]]; then
         start_capture=$((-pane_scroll_position))
         end_capture=$((pane_height - pane_scroll_position - 1))
@@ -60,7 +70,7 @@ function capture_pane() {
         end_capture="-"
     fi
 
-    tmux capture-pane -e -J -p -t $pane_id -E $end_capture -S $start_capture > $out_path
+    tmux capture-pane -e -J -p -t "$pane_id" -E "$end_capture" -S "$start_capture" > "$out_path"
 }
 
 function exec_in_pane() {
