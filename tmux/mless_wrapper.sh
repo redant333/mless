@@ -1,9 +1,24 @@
 #!/usr/bin/env bash
+#
+# Execute mless to select text from the current tmux pane.
+# This script does roughly the following:
+#  - Capture the contents of the currently active pane into a file
+#  - Prepare a side window with a pane with the same dimensions as the
+#    currently active one
+#  - Execute mless in the side window
+#  - Swap the current pane and its equivalent in the side pane to make
+#    mless visible to the user
+#  - Wait for the user to finish selection
+#  - Paste the selected text (if any) in the original pane
+#  - Clean up and make all the windows as they were before the execution
+#    of this script
+#
 # Heavily based on the approach taken by tmux-picker
 # https://github.com/pawel-wiejacha/tmux-picker/tree/827845f89044fbfb3cd73905f000340bbbda663a
 set -ue
 
 readonly SIDE_WINDOW_NAME="[mless]"
+readonly CAPTURE_FILE="/tmp/mless_captured"
 
 ###############################################################################
 # Create a window in the background and create a pane in it with the same
@@ -106,18 +121,18 @@ function execute_mless() {
     tmux kill-window -t "$side_window_id"
 }
 
-capture_file="/tmp/mless_captured"
+# Capture the current pane
 selection_source_pane_id=$(tmux list-panes -F "#{pane_id}:#{?pane_active,active,nope}" | grep active | cut -d: -f1)
+capture_pane "$selection_source_pane_id" "$CAPTURE_FILE"
 
-capture_pane "$selection_source_pane_id" "$capture_file"
-
+# Initialize the side window and get the IDs
 picker_ids=$(init_side_window "$SIDE_WINDOW_NAME")
-echo "<$picker_ids>" > /tmp/debug
-picker_pane_id=$(echo "$picker_ids" | cut -f1 -d:)
-side_window_id=$(echo "$picker_ids" | cut -f2 -d:)
+picker_pane_id=$(cut -f1 -d: <<< "$picker_ids")
+side_window_id=$(cut -f2 -d: <<< "$picker_ids")
 
-print_stuff_text=$(declare -f execute_mless | tr '\n' ' ' | sed 's/\}/; }/')
-args="\"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$capture_file\""
-cmd="bash -c '$print_stuff_text ; execute_mless $args'"
+# Prepare the command that will be executed to run mless in the prepared pane
+# The tr and sed parts are mean to transform the function into a one liner
+execute_mless_contents=$(declare -f execute_mless | tr '\n' ' ' | sed 's/\}/; }/')
+args="\"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$CAPTURE_FILE\""
 
-tmux respawn-pane -k -t "$picker_pane_id" bash -c "$print_stuff_text ; execute_mless $args"
+tmux respawn-pane -k -t "$picker_pane_id" bash -c "$execute_mless_contents ; execute_mless $args"
