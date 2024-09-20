@@ -15,10 +15,17 @@
 #
 # Heavily based on the approach taken by tmux-picker
 # https://github.com/pawel-wiejacha/tmux-picker/tree/827845f89044fbfb3cd73905f000340bbbda663a
+#
+# Arguments:
+#   String that executes mless (either path or name available in PATH)
+#   Command to use to place the selection into clipboard. If not provided
+#       the selection will be inserted into the current pane.
 set -ue
 
 readonly SIDE_WINDOW_NAME="[mless]"
 readonly CAPTURE_FILE="/tmp/mless_captured"
+readonly MLESS_EXECUTABLE="$1"
+readonly COPY_PIPE_COMMAND=${2-""}
 
 ###############################################################################
 # Create a window in the background and create a pane in it with the same
@@ -106,15 +113,21 @@ function execute_mless() {
     local picker_pane_id=$2
     local side_window_id=$3
     local select_from_file=$4
+    local mless_executable=$5
+    local copy_pipe_command=$6
 
-    cmd="mouseless-selector $select_from_file"
+    cmd="$mless_executable $select_from_file"
 
     tmux swap-pane -s "$selection_source_pane_id" -t "$picker_pane_id"
 
     selected_text=$($cmd)
 
     if [[ "$selected_text" != "" ]]; then
-        echo -n "$selected_text" | tmux loadb -b "$BUFFER_NAME" - && tmux paste-buffer -b "$BUFFER_NAME" -t "$selection_source_pane_id"
+        if [[ $copy_pipe_command != "" ]]; then
+            echo -n "$selected_text" | $copy_pipe_command
+        else
+            echo -n "$selected_text" | tmux loadb -b "$BUFFER_NAME" - && tmux paste-buffer -b "$BUFFER_NAME" -t "$selection_source_pane_id"
+        fi
     fi
 
     tmux swap-pane -s "$picker_pane_id" -t "$selection_source_pane_id"
@@ -133,6 +146,6 @@ side_window_id=$(cut -f2 -d: <<< "$picker_ids")
 # Prepare the command that will be executed to run mless in the prepared pane
 # The tr and sed parts are mean to transform the function into a one liner
 execute_mless_contents=$(declare -f execute_mless | tr '\n' ' ' | sed 's/\}/; }/')
-args="\"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$CAPTURE_FILE\""
+args=" \"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$CAPTURE_FILE\" \"$MLESS_EXECUTABLE\" \"$COPY_PIPE_COMMAND\" "
 
 tmux respawn-pane -k -t "$picker_pane_id" bash -c "$execute_mless_contents ; execute_mless $args"
