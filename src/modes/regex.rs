@@ -136,10 +136,14 @@ impl Mode for RegexMode {
     }
 
     fn get_draw_instructions(&self) -> Vec<Draw> {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let hint_fg = Color::parse_ansi("5;232").unwrap();
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let hint_bg = Color::parse_ansi("5;208").unwrap();
 
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let highlight_fg = Color::parse_ansi("5;232").unwrap();
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let highlight_bg = Color::parse_ansi("5;252").unwrap();
 
         let mut highlights: Vec<StyledSegment> = self
