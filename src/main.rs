@@ -68,6 +68,50 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
     Ok(renderer)
 }
 
+fn run_main_loop(
+    input_handler: InputHandler,
+    initial_mode: RegexMode,
+    renderer: &mut Renderer<File>,
+    input_text: String,
+) -> Result<String, RunError> {
+    let mut current_mode = initial_mode;
+
+    info!("Starting the loop");
+    loop {
+        let draw_instructions = current_mode.get_draw_instructions();
+        // TODO This premature exit could mess up the terminal.
+        // Handle this in a better way.
+        renderer.render(&input_text, &draw_instructions)?;
+
+        let action = match read() {
+            Ok(event) => {
+                debug!("Got event {:?}", event);
+                input_handler.get_action(event)
+            }
+            _ => None,
+        };
+
+        debug!("Got input handler action {:?}", action);
+
+        let mode_action = match action {
+            Some(Action::Exit) => return Ok("".to_string()),
+            Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
+            None => None,
+        };
+
+        debug!("Got mode action {:?}", mode_action);
+
+        // The enum will get more variants, so make it a match from the start
+        #[allow(clippy::single_match)]
+        match mode_action {
+            Some(ModeEvent::TextSelected(text)) => {
+                return Ok(text);
+            }
+            None => (),
+        }
+    }
+}
+
 fn run(args: Args) -> Result<String, RunError> {
     initialize_logging()?;
     info!("Initializing");
@@ -94,7 +138,7 @@ fn run(args: Args) -> Result<String, RunError> {
     let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
 
     let ModeArgs::RegexMode(args) = &config.modes[0].args;
-    let mut current_mode = RegexMode::new(&input_text, args, hint_generator)?;
+    let initial_mode = RegexMode::new(&input_text, args, hint_generator)?;
 
     renderer
         .initialize_terminal()
@@ -102,43 +146,7 @@ fn run(args: Args) -> Result<String, RunError> {
             operation: "initialize",
         })?;
 
-    let mut return_text = String::new();
-
-    info!("Starting the loop");
-    loop {
-        let draw_instructions = current_mode.get_draw_instructions();
-        // TODO This premature exit could mess up the terminal.
-        // Handle this in a better way.
-        renderer.render(&input_text, &draw_instructions)?;
-
-        let action = match read() {
-            Ok(event) => {
-                debug!("Got event {:?}", event);
-                input_handler.get_action(event)
-            }
-            _ => None,
-        };
-
-        debug!("Got input handler action {:?}", action);
-
-        let mode_action = match action {
-            Some(Action::Exit) => break,
-            Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
-            None => None,
-        };
-
-        debug!("Got mode action {:?}", mode_action);
-
-        // The enum will get more variants, so make it a match from the start
-        #[allow(clippy::single_match)]
-        match mode_action {
-            Some(ModeEvent::TextSelected(text)) => {
-                return_text = text;
-                break;
-            }
-            None => (),
-        }
-    }
+    let ret = run_main_loop(input_handler, initial_mode, &mut renderer, input_text);
 
     renderer
         .uninitialize_terminal()
@@ -146,7 +154,7 @@ fn run(args: Args) -> Result<String, RunError> {
             operation: "uninitialize",
         })?;
 
-    Ok(return_text)
+    ret
 }
 
 fn main() {
