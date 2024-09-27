@@ -1,4 +1,5 @@
 mod configuration;
+mod error;
 mod hints;
 mod input_handler;
 mod logging;
@@ -8,11 +9,16 @@ mod rendering;
 use clap::Parser;
 use configuration::Config;
 use crossterm::event::read;
+use error::{
+    ConfigOpenSnafu, ConfigParseSnafu, CouldNotReadInputSnafu, RunError, TerminalHandlingSnafu,
+    TtyOpenSnafu,
+};
 use input_handler::{Action, InputHandler};
 use log::{debug, info};
 use logging::initialize_logging;
 use modes::{Mode, ModeEvent, RegexMode};
 use rendering::Renderer;
+use snafu::ResultExt;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -20,41 +26,6 @@ use std::process::exit;
 
 use crate::configuration::ModeArgs;
 use crate::hints::HintPoolGenerator;
-use snafu::prelude::*;
-
-#[derive(Debug, Snafu)]
-#[snafu(visibility(pub))]
-pub enum RunError {
-    #[snafu(display("Could not open config file {}\n{}", path.display(), source))]
-    ConfigOpen { source: io::Error, path: PathBuf },
-
-    #[snafu(display("Could not parse config file {}\n{}", path.display(), source))]
-    ConfigParse {
-        source: configuration::Error,
-        path: PathBuf,
-    },
-
-    #[snafu(display("Could not open /dev/tty for writing\n{}", source))]
-    TtyOpen { source: io::Error },
-
-    #[snafu(display("Could not {operation} the terminal\n{source}"))]
-    TerminalHandling {
-        source: io::Error,
-        operation: String,
-    },
-
-    #[snafu(display("Could not start logging to {}\n{}", path, source))]
-    LoggingStart { source: io::Error, path: String },
-
-    #[snafu(display("Invalid regular expression\n{}", source))]
-    InvalidRegex { source: regex::Error },
-
-    #[snafu(display("IO error\n{}", source))]
-    IoError { source: io::Error },
-
-    #[snafu(display("Could not read input\n{}", source))]
-    CouldNotReadInput { source: io::Error },
-}
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]

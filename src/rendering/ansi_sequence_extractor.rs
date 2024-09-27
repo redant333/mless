@@ -6,7 +6,7 @@ use log::info;
 use regex::Regex;
 use snafu::ResultExt;
 
-use crate::{InvalidRegexSnafu, RunError};
+use crate::error::{InvalidRegexSnafu, RunError};
 
 /// A struct to extract and store all ANSI sequences in a string
 pub struct AnsiSequenceExtractor {
