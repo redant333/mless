@@ -12,6 +12,8 @@ use crossterm::{
 };
 use log::trace;
 
+use crate::RunError;
+
 use super::ansi_sequence_extractor::AnsiSequenceExtractor;
 use super::{DataOverlay, StyledSegment, TextStyle};
 
@@ -31,7 +33,7 @@ impl<T: Write + ?Sized> Renderer<T> {
     /// Render the given data and draw instructions to the terminal.
     ///
     /// Draw instructions are executed in the given order.
-    pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) {
+    pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) -> Result<(), RunError> {
         trace!("Rendering draw instructions {:#?}", draw_instructions);
 
         // Perform rendering into a buffer first, to avoid any blinking issues
@@ -44,13 +46,15 @@ impl<T: Write + ?Sized> Renderer<T> {
                     styled_segments,
                     text_overlays,
                 } => {
-                    self.draw_styled_data(&mut buffer, data, styled_segments, text_overlays);
+                    self.draw_styled_data(&mut buffer, data, styled_segments, text_overlays)?;
                 }
             }
         }
 
         self.output.write_all(&buffer).unwrap();
         self.output.flush().unwrap();
+
+        Ok(())
     }
 
     /// Render styled parts of data to the screen, taking into account new lines
@@ -61,9 +65,9 @@ impl<T: Write + ?Sized> Renderer<T> {
         data: &str,
         styled_segments: &[StyledSegment],
         text_overlays: &[DataOverlay],
-    ) {
+    ) -> Result<(), RunError> {
         let mut overlay_chars: VecDeque<char> = VecDeque::new();
-        let ansi_sequences = AnsiSequenceExtractor::new(data);
+        let ansi_sequences = AnsiSequenceExtractor::new(data)?;
         let mut last_intra_segment_style = None;
 
         // Ignore the terminating new line if present
@@ -164,6 +168,8 @@ impl<T: Write + ?Sized> Renderer<T> {
                 _ => (),
             }
         }
+
+        Ok(())
     }
 
     /// Prepare the terminal for the use by the application.

@@ -45,6 +45,9 @@ pub enum RunError {
 
     #[snafu(display("Could not start logging to {}\n{}", path, source))]
     LoggingStart { source: io::Error, path: String },
+
+    #[snafu(display("Invalid regular expression\n{}", source))]
+    InvalidRegex { source: regex::Error },
 }
 
 #[derive(Debug, Parser)]
@@ -108,7 +111,7 @@ fn run(args: Args) -> Result<String, RunError> {
     let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
 
     let ModeArgs::RegexMode(args) = &config.modes[0].args;
-    let mut current_mode = RegexMode::new(&input_text, args, hint_generator);
+    let mut current_mode = RegexMode::new(&input_text, args, hint_generator)?;
 
     renderer
         .initialize_terminal()
@@ -121,7 +124,9 @@ fn run(args: Args) -> Result<String, RunError> {
     info!("Starting the loop");
     loop {
         let draw_instructions = current_mode.get_draw_instructions();
-        renderer.render(&input_text, &draw_instructions);
+        // TODO This premature exit could mess up the terminal.
+        // Handle this in a better way.
+        renderer.render(&input_text, &draw_instructions)?;
 
         let action = match read() {
             Ok(event) => {

@@ -4,6 +4,9 @@ use std::ops::Range;
 
 use log::info;
 use regex::Regex;
+use snafu::ResultExt;
+
+use crate::{InvalidRegexSnafu, RunError};
 
 /// A struct to extract and store all ANSI sequences in a string
 pub struct AnsiSequenceExtractor {
@@ -18,11 +21,15 @@ struct AnsiSequenceEntry {
 
 impl AnsiSequenceExtractor {
     /// Create a new extractor from the given string
-    pub fn new(data: &str) -> Self {
-        let ansi_regex = Regex::new("\x1b\\[[^m]+m").unwrap();
+    pub fn new(data: &str) -> Result<Self, RunError> {
+        let ansi_regex = Regex::new("\x1b\\[[^m]+m") //
+            .context(InvalidRegexSnafu {})?;
+
         let ansi_sequences = ansi_regex
             .captures_iter(data)
             .map(|captures| {
+                // Documentation guarantees non-None for 0
+                #[allow(clippy::unwrap_used)]
                 let regex_match = captures.get(0).unwrap();
 
                 info!(
@@ -37,7 +44,7 @@ impl AnsiSequenceExtractor {
             })
             .collect();
 
-        Self { ansi_sequences }
+        Ok(Self { ansi_sequences })
     }
 
     /// Check if the given byte location is inside any of the extracted
