@@ -48,6 +48,9 @@ pub enum RunError {
 
     #[snafu(display("Invalid regular expression\n{}", source))]
     InvalidRegex { source: regex::Error },
+
+    #[snafu(display("IO error\n{}", source))]
+    IoError { source: io::Error },
 }
 
 #[derive(Debug, Parser)]

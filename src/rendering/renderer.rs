@@ -11,8 +11,9 @@ use crossterm::{
     QueueableCommand,
 };
 use log::trace;
+use snafu::ResultExt;
 
-use crate::RunError;
+use crate::{IoSnafu, RunError};
 
 use super::ansi_sequence_extractor::AnsiSequenceExtractor;
 use super::{DataOverlay, StyledSegment, TextStyle};
@@ -38,7 +39,9 @@ impl<T: Write + ?Sized> Renderer<T> {
 
         // Perform rendering into a buffer first, to avoid any blinking issues
         let mut buffer: Vec<u8> = vec![];
-        self.output.queue(Clear(ClearType::All)).unwrap();
+        self.output
+            .queue(Clear(ClearType::All))
+            .context(IoSnafu {})?;
 
         for instruction in draw_instructions {
             match instruction {
@@ -51,8 +54,8 @@ impl<T: Write + ?Sized> Renderer<T> {
             }
         }
 
-        self.output.write_all(&buffer).unwrap();
-        self.output.flush().unwrap();
+        self.output.write_all(&buffer).context(IoSnafu {})?;
+        self.output.flush().context(IoSnafu {})?;
 
         Ok(())
     }
@@ -101,13 +104,13 @@ impl<T: Write + ?Sized> Renderer<T> {
                 }
             });
 
-            update_style(
+            self.update_style(
                 &last_intra_segment_style,
                 &intra_segment_style,
                 &ansi_sequences,
                 buffer,
                 byte_position,
-            );
+            )?;
             last_intra_segment_style = intra_segment_style;
 
             // Do not print ANSI sequences inside of styled segments
@@ -122,53 +125,68 @@ impl<T: Write + ?Sized> Renderer<T> {
                 };
 
                 if char == '\n' {
-                    buffer.queue(Print('\r')).unwrap();
+                    buffer.queue(Print('\r')).context(IoSnafu {})?;
                 }
-                buffer.queue(Print(char)).unwrap();
+                buffer.queue(Print(char)).context(IoSnafu {})?;
             }
         }
+        Ok(())
+    }
 
-        /// Update the terminal style when switching in and out of styled segments
-        fn update_style(
-            last_segment_style: &Option<TextStyle>,
-            segment_style: &Option<TextStyle>,
-            ansi_sequences: &AnsiSequenceExtractor,
-            buffer: &mut Vec<u8>,
-            current_position: usize,
-        ) {
-            use style::*;
+    /// Update the terminal style when switching in and out of styled segments
+    fn update_style(
+        &self,
+        last_segment_style: &Option<TextStyle>,
+        segment_style: &Option<TextStyle>,
+        ansi_sequences: &AnsiSequenceExtractor,
+        buffer: &mut Vec<u8>,
+        current_position: usize,
+    ) -> Result<(), RunError> {
+        use style::*;
 
-            match (last_segment_style, segment_style) {
-                (Some(_), None) => {
-                    // Just exited from a styled segment, restore any styling disturbed by it
-                    buffer.queue(SetAttribute(Attribute::Reset)).unwrap();
-                    buffer.queue(ResetColor).unwrap();
+        match (last_segment_style, segment_style) {
+            (Some(_), None) => {
+                // Just exited from a styled segment, restore any styling disturbed by it
+                buffer
+                    .queue(SetAttribute(Attribute::Reset))
+                    .context(IoSnafu {})?;
+                buffer.queue(ResetColor).context(IoSnafu {})?;
 
-                    // In order to restore the styling, this applies all the sequences
-                    // from the beginning of the data again. This is a fairly silly approach
-                    // but it means that the code does not need to worry about which styles
-                    // overried which and similar.
-                    for sequence in ansi_sequences.get_all_sequences_before(current_position) {
-                        buffer.queue(Print(sequence)).unwrap();
-                    }
+                // In order to restore the styling, this applies all the sequences
+                // from the beginning of the data again. This is a fairly silly approach
+                // but it means that the code does not need to worry about which styles
+                // overried which and similar.
+                for sequence in ansi_sequences.get_all_sequences_before(current_position) {
+                    buffer.queue(Print(sequence)).context(IoSnafu {})?;
                 }
-                (None, Some(style)) => {
-                    // Just entered a segment, apply its style
-                    buffer.queue(SetAttribute(Attribute::Reset)).unwrap();
-                    buffer.queue(SetForegroundColor(style.foreground)).unwrap();
-                    buffer.queue(SetBackgroundColor(style.background)).unwrap();
-                }
-                (Some(last_style), Some(style)) if last_style != style => {
-                    // Just switched from one segment to another, apply the style
-                    // of the new segment
-                    buffer.queue(SetAttribute(Attribute::Reset)).unwrap();
-                    buffer.queue(SetForegroundColor(style.foreground)).unwrap();
-                    buffer.queue(SetBackgroundColor(style.background)).unwrap();
-                }
-                _ => (),
             }
+            (None, Some(style)) => {
+                // Just entered a segment, apply its style
+                buffer
+                    .queue(SetAttribute(Attribute::Reset))
+                    .context(IoSnafu {})?;
+                buffer
+                    .queue(SetForegroundColor(style.foreground))
+                    .context(IoSnafu {})?;
+                buffer
+                    .queue(SetBackgroundColor(style.background))
+                    .context(IoSnafu {})?;
+            }
+            (Some(last_style), Some(style)) if last_style != style => {
+                // Just switched from one segment to another, apply the style
+                // of the new segment
+                buffer
+                    .queue(SetAttribute(Attribute::Reset))
+                    .context(IoSnafu {})?;
+                buffer
+                    .queue(SetForegroundColor(style.foreground))
+                    .context(IoSnafu {})?;
+                buffer
+                    .queue(SetBackgroundColor(style.background))
+                    .context(IoSnafu {})?;
+            }
+            _ => (),
         }
-
         Ok(())
     }
 
