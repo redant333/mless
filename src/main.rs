@@ -14,7 +14,7 @@ use logging::initialize_logging;
 use modes::{Mode, ModeEvent, RegexMode};
 use rendering::Renderer;
 use std::fs::{File, OpenOptions};
-use std::io;
+use std::io::{self, Read};
 use std::path::PathBuf;
 use std::process::exit;
 
@@ -51,6 +51,9 @@ pub enum RunError {
 
     #[snafu(display("IO error\n{}", source))]
     IoError { source: io::Error },
+
+    #[snafu(display("Could not read input\n{}", source))]
+    CouldNotReadInput { source: io::Error },
 }
 
 #[derive(Debug, Parser)]
@@ -104,11 +107,17 @@ fn run(args: Args) -> Result<String, RunError> {
     let mut renderer = create_renderer()?;
 
     let input_text = match args.file {
-        Some(path) => std::fs::read_to_string(path).unwrap(),
-        None => io::stdin()
-            .lines()
-            .map(|line| line.unwrap() + "\n")
-            .collect(),
+        Some(path) => {
+            std::fs::read_to_string(path) //
+                .context(CouldNotReadInputSnafu {})?
+        }
+        None => {
+            let mut ret = "".to_string();
+            io::stdin()
+                .read_to_string(&mut ret) //
+                .context(CouldNotReadInputSnafu {})?;
+            ret
+        }
     };
 
     let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
