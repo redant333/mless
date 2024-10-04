@@ -88,6 +88,18 @@ fn produces_expected_highlights_and_overlays_for_colored_text() {
     assert!(has_highlight(&styled_segments, 50, 1));
 }
 
+#[test]
+fn produces_no_highlights_or_overlays_for_zero_length_match() {
+    let (text_overlays, styled_segments) = get_draw_instructions(
+        "stuff",
+        vec![r"x*".into()],
+        vec!["a".into(), "b".into(), "c".into()],
+    );
+
+    assert_eq!(text_overlays.len(), 0);
+    assert_eq!(styled_segments.len(), 0);
+}
+
 #[test_case(&[(2,4), (6, 8)], 0, 0)]
 #[test_case(&[(2,4), (6, 8)], 1, 1)]
 #[test_case(&[(2,4), (6, 8)], 2, 4)]

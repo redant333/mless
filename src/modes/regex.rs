@@ -86,10 +86,14 @@ impl RegexMode {
 
             regex
                 .captures_iter(&cleaned_data)
-                .map(|capture| {
+                .filter_map(|capture| {
                     // Documentation guarantees non-None for 0
                     #[allow(clippy::unwrap_used)]
                     let regex_match = capture.get(0).unwrap();
+
+                    if regex_match.is_empty() {
+                        return None;
+                    }
 
                     // The calculation needs to be performed with indexes of the
                     // first and the last character in the match, instead of start
@@ -100,11 +104,11 @@ impl RegexMode {
                     let last_in_original_data =
                         get_original_index(&ignore_ranges, regex_match.end() - 1);
 
-                    Hit {
+                    Some(Hit {
                         start: first_in_original_data,
                         length: last_in_original_data - first_in_original_data + 1,
                         text: regex_match.as_str().to_string(),
-                    }
+                    })
                 })
                 .for_each(|hit| hits.push(hit));
         }
