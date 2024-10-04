@@ -42,6 +42,17 @@ test-e2e-run *additional_args: test-venv-init
 
 alias e := test-e2e-run
 
+# Run unit tests.
+test-unit-run:
+    #!/bin/bash -eu
+    cargo test
+
+alias t := test-unit-run
+
+# Run all tests.
+test-all-run: test-unit-run test-e2e-run
+alias a := test-all-run
+
 # Run all pre-commit checks.
 pre-commit:
     pre-commit run --all-files
