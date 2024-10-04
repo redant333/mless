@@ -1,7 +1,10 @@
 use std::fs::File;
 
 use super::modes;
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{self, Unexpected},
+    Deserialize, Deserializer, Serialize,
+};
 use snafu::{ResultExt, Snafu};
 
 #[derive(Debug, Snafu)]
@@ -21,12 +24,14 @@ pub struct Config {
     /// Characters that can be used by structs implementing [modes::Mode]
     /// trait.
     #[serde(default = "Config::default_hint_characters")]
+    #[serde(deserialize_with = "Config::validate_hint_characters")]
     pub hint_characters: String,
     /// List of modes that the user can use.
     ///
     /// Note that it is possible to have multiple instances of the same
     /// mode with different arguments. See [modes::Mode]
     #[serde(default = "Config::default_modes")]
+    #[serde(deserialize_with = "Config::validate_modes")]
     pub modes: Vec<modes::Mode>,
 }
 
@@ -42,6 +47,38 @@ impl Default for Config {
 impl Config {
     fn default_hint_characters() -> String {
         "qwertyuiopasdfghjklzxcvbnm".into()
+    }
+
+    fn validate_hint_characters<'de, D>(d: D) -> Result<String, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let hint_chars = String::deserialize(d)?;
+
+        if hint_chars.is_empty() {
+            return Err(de::Error::invalid_value(
+                Unexpected::Str(&hint_chars),
+                &"contain at least one character",
+            ));
+        }
+
+        Ok(hint_chars)
+    }
+
+    fn validate_modes<'de, D>(d: D) -> Result<Vec<modes::Mode>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let modes = Vec::<modes::Mode>::deserialize(d)?;
+
+        if modes.is_empty() {
+            return Err(de::Error::invalid_value(
+                Unexpected::Seq,
+                &"at least one mode",
+            ));
+        }
+
+        Ok(modes)
     }
 
     fn default_modes() -> Vec<modes::Mode> {
@@ -90,5 +127,17 @@ mod tests {
         let serialized = serde_yaml::to_string(&config).unwrap();
 
         assert!(!serialized.is_empty());
+    }
+
+    #[test]
+    fn hint_characters_deserialization_returns_error_when_empty() {
+        let result = serde_yaml::from_str::<Config>("hint_characters: ''");
+        result.unwrap_err();
+    }
+
+    #[test]
+    fn modes_deserialization_returns_error() {
+        let result = serde_yaml::from_str::<Config>("modes: []");
+        result.unwrap_err();
     }
 }
