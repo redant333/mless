@@ -67,7 +67,7 @@ impl TryFrom<File> for Config {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
