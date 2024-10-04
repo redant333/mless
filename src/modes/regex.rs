@@ -10,12 +10,15 @@ use std::{
 use crossterm::style::Color;
 use log::{info, trace};
 use regex::Regex;
+use snafu::ResultExt;
 
+use crate::error::InvalidRegexSnafu;
 use crate::{
     configuration,
     hints::HintGenerator,
     input_handler::KeyPress,
     rendering::{DataOverlay, Draw, StyledSegment, TextStyle},
+    RunError,
 };
 
 use super::{Mode, ModeEvent};
@@ -56,15 +59,18 @@ impl RegexMode {
         data: &str,
         args: &configuration::RegexArgs,
         hint_generator: Box<dyn HintGenerator>,
-    ) -> Self {
+    ) -> Result<Self, RunError> {
         let mut hits = vec![];
 
         // All ANSI color sequences should be ignored while matching
-        let ignore_regex = Regex::new("\x1b\\[[^m]+m").unwrap();
+        let ignore_regex = Regex::new("\x1b\\[[^m]+m") //
+            .context(InvalidRegexSnafu {})?;
 
         let ignore_ranges = ignore_regex
             .captures_iter(data)
             .map(|captures| {
+                // Documentation guarantees non-None for 0
+                #[allow(clippy::unwrap_used)]
                 let regex_match = captures.get(0).unwrap();
                 (regex_match.start(), regex_match.end())
             })
@@ -75,23 +81,26 @@ impl RegexMode {
         let cleaned_data = ignore_regex.replace_all(data, "");
 
         for regex in &args.regexes {
-            let regex = Regex::new(regex).unwrap();
+            let regex = Regex::new(regex) //
+                .context(InvalidRegexSnafu {})?;
 
             regex
                 .captures_iter(&cleaned_data)
-                .filter_map(|capture| {
-                    let regex_match = capture.get(0)?;
+                .map(|capture| {
+                    // Documentation guarantees non-None for 0
+                    #[allow(clippy::unwrap_used)]
+                    let regex_match = capture.get(0).unwrap();
 
                     let start_in_original_data =
                         get_original_index(&ignore_ranges, regex_match.start());
                     let end_in_original_data =
                         get_original_index(&ignore_ranges, regex_match.end());
 
-                    Some(Hit {
+                    Hit {
                         start: start_in_original_data,
                         length: end_in_original_data - start_in_original_data,
                         text: regex_match.as_str().to_string(),
-                    })
+                    }
                 })
                 .for_each(|hit| hits.push(hit));
         }
@@ -100,10 +109,10 @@ impl RegexMode {
 
         trace!("Constructed hint hit map {:#?}", hint_hit_map);
 
-        Self {
+        Ok(Self {
             hint_hit_map,
             input_buffer: String::new(),
-        }
+        })
     }
 }
 
@@ -128,10 +137,14 @@ impl Mode for RegexMode {
     }
 
     fn get_draw_instructions(&self) -> Vec<Draw> {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let hint_fg = Color::parse_ansi("5;232").unwrap();
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let hint_bg = Color::parse_ansi("5;208").unwrap();
 
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let highlight_fg = Color::parse_ansi("5;232").unwrap();
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let highlight_bg = Color::parse_ansi("5;252").unwrap();
 
         let mut highlights: Vec<StyledSegment> = self

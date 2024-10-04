@@ -18,7 +18,8 @@ use env_logger::Env;
 use log::info;
 use snafu::ResultExt;
 
-use crate::{LoggingStartSnafu, RunError};
+use crate::error::LoggingStartSnafu;
+use crate::RunError;
 
 /// Name for the environment variable containing the path of the log file.
 const LOG_PATH_ENV: &str = "MLESS_LOG";

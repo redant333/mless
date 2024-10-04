@@ -1,4 +1,5 @@
 mod configuration;
+mod error;
 mod hints;
 mod input_handler;
 mod logging;
@@ -8,44 +9,23 @@ mod rendering;
 use clap::Parser;
 use configuration::Config;
 use crossterm::event::read;
+use error::{
+    ConfigOpenSnafu, ConfigParseSnafu, CouldNotReadInputSnafu, RunError, TerminalHandlingSnafu,
+    TtyOpenSnafu,
+};
 use input_handler::{Action, InputHandler};
 use log::{debug, info};
 use logging::initialize_logging;
 use modes::{Mode, ModeEvent, RegexMode};
 use rendering::Renderer;
+use snafu::ResultExt;
 use std::fs::{File, OpenOptions};
-use std::io;
+use std::io::{self, Read};
 use std::path::PathBuf;
 use std::process::exit;
 
 use crate::configuration::ModeArgs;
 use crate::hints::HintPoolGenerator;
-use snafu::prelude::*;
-
-#[derive(Debug, Snafu)]
-#[snafu(visibility(pub))]
-pub enum RunError {
-    #[snafu(display("Could not open config file {}\n{}", path.display(), source))]
-    ConfigOpen { source: io::Error, path: PathBuf },
-
-    #[snafu(display("Could not parse config file {}\n{}", path.display(), source))]
-    ConfigParse {
-        source: configuration::Error,
-        path: PathBuf,
-    },
-
-    #[snafu(display("Could not open /dev/tty for writing\n{}", source))]
-    TtyOpen { source: io::Error },
-
-    #[snafu(display("Could not {operation} the terminal\n{source}"))]
-    TerminalHandling {
-        source: io::Error,
-        operation: String,
-    },
-
-    #[snafu(display("Could not start logging to {}\n{}", path, source))]
-    LoggingStart { source: io::Error, path: String },
-}
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -88,40 +68,18 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
     Ok(renderer)
 }
 
-fn run(args: Args) -> Result<String, RunError> {
-    initialize_logging()?;
-    info!("Initializing");
-
-    let config = load_config(args.config)?;
-
-    let input_handler = InputHandler::from_config(&config);
-    let mut renderer = create_renderer()?;
-
-    let input_text = match args.file {
-        Some(path) => std::fs::read_to_string(path).unwrap(),
-        None => io::stdin()
-            .lines()
-            .map(|line| line.unwrap() + "\n")
-            .collect(),
-    };
-
-    let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
-
-    let ModeArgs::RegexMode(args) = &config.modes[0].args;
-    let mut current_mode = RegexMode::new(&input_text, args, hint_generator);
-
-    renderer
-        .initialize_terminal()
-        .context(TerminalHandlingSnafu {
-            operation: "initialize",
-        })?;
-
-    let mut return_text = String::new();
+fn run_main_loop(
+    input_handler: InputHandler,
+    initial_mode: RegexMode,
+    renderer: &mut Renderer<File>,
+    input_text: String,
+) -> Result<String, RunError> {
+    let mut current_mode = initial_mode;
 
     info!("Starting the loop");
     loop {
         let draw_instructions = current_mode.get_draw_instructions();
-        renderer.render(&input_text, &draw_instructions);
+        renderer.render(&input_text, &draw_instructions)?;
 
         let action = match read() {
             Ok(event) => {
@@ -134,7 +92,7 @@ fn run(args: Args) -> Result<String, RunError> {
         debug!("Got input handler action {:?}", action);
 
         let mode_action = match action {
-            Some(Action::Exit) => break,
+            Some(Action::Exit) => return Ok("".to_string()),
             Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
             None => None,
         };
@@ -145,12 +103,48 @@ fn run(args: Args) -> Result<String, RunError> {
         #[allow(clippy::single_match)]
         match mode_action {
             Some(ModeEvent::TextSelected(text)) => {
-                return_text = text;
-                break;
+                return Ok(text);
             }
             None => (),
         }
     }
+}
+
+fn run(args: Args) -> Result<String, RunError> {
+    initialize_logging()?;
+    info!("Initializing");
+
+    let config = load_config(args.config)?;
+
+    let input_handler = InputHandler::from_config(&config);
+    let mut renderer = create_renderer()?;
+
+    let input_text = match args.file {
+        Some(path) => {
+            std::fs::read_to_string(path) //
+                .context(CouldNotReadInputSnafu {})?
+        }
+        None => {
+            let mut ret = "".to_string();
+            io::stdin()
+                .read_to_string(&mut ret) //
+                .context(CouldNotReadInputSnafu {})?;
+            ret
+        }
+    };
+
+    let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
+
+    let ModeArgs::RegexMode(args) = &config.modes[0].args;
+    let initial_mode = RegexMode::new(&input_text, args, hint_generator)?;
+
+    renderer
+        .initialize_terminal()
+        .context(TerminalHandlingSnafu {
+            operation: "initialize",
+        })?;
+
+    let ret = run_main_loop(input_handler, initial_mode, &mut renderer, input_text);
 
     renderer
         .uninitialize_terminal()
@@ -158,7 +152,7 @@ fn run(args: Args) -> Result<String, RunError> {
             operation: "uninitialize",
         })?;
 
-    Ok(return_text)
+    ret
 }
 
 fn main() {
