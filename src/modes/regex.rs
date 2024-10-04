@@ -23,6 +23,9 @@ use crate::{
 
 use super::{Mode, ModeEvent};
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug)]
 /// Struct that records a hit(match) that can be selected.
 struct Hit {
@@ -259,10 +262,4 @@ fn into_hint_hit_map(hits: Vec<Hit>, hint_generator: &dyn HintGenerator) -> Vec<
     }
 
     hint_hit_map
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    mod tests_regex;
 }
