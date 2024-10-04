@@ -91,14 +91,18 @@ impl RegexMode {
                     #[allow(clippy::unwrap_used)]
                     let regex_match = capture.get(0).unwrap();
 
-                    let start_in_original_data =
+                    // The calculation needs to be performed with indexes of the
+                    // first and the last character in the match, instead of start
+                    // and end because the end s one character after the match and
+                    // can be moved by the ignored data resulting too large length.
+                    let first_in_original_data =
                         get_original_index(&ignore_ranges, regex_match.start());
-                    let end_in_original_data =
-                        get_original_index(&ignore_ranges, regex_match.end());
+                    let last_in_original_data =
+                        get_original_index(&ignore_ranges, regex_match.end() - 1);
 
                     Hit {
-                        start: start_in_original_data,
-                        length: end_in_original_data - start_in_original_data,
+                        start: first_in_original_data,
+                        length: last_in_original_data - first_in_original_data + 1,
                         text: regex_match.as_str().to_string(),
                     }
                 })
