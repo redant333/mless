@@ -79,8 +79,6 @@ fn run_main_loop(
     info!("Starting the loop");
     loop {
         let draw_instructions = current_mode.get_draw_instructions();
-        // TODO This premature exit could mess up the terminal.
-        // Handle this in a better way.
         renderer.render(&input_text, &draw_instructions)?;
 
         let action = match read() {
