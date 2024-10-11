@@ -67,8 +67,7 @@ impl HintHitMap {
 
     /// Get the first [Hit] associated with the given hint string.
     pub fn get_hit(&self, hint: &str) -> Option<&Hit> {
-        self //
-            .pairs
+        self.pairs //
             .iter()
             .find_map(
                 |(pair_hint, hit)| {
@@ -79,5 +78,65 @@ impl HintHitMap {
                     }
                 },
             )
+    }
+
+    /// Check if the map contains a hint beginning with the given prefix.
+    /// The [Hit] value does not affect the outcome of this function.
+    pub fn has_hint_with_prefix(&self, prefix: &str) -> bool {
+        self.pairs
+            .iter()
+            .any(|(pair_hint, _)| pair_hint.starts_with(prefix))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use test_case::test_case;
+
+    #[test]
+    fn get_hit_returns_some_hit_when_exists() {
+        let hint_hit_map = HintHitMap {
+            #[rustfmt::skip]
+            pairs: vec![
+                ("a".to_string(), Hit {start: 0, length: 5, text: "stuff".to_string() }),
+                ("b".to_string(), Hit {start: 5, length: 6, text: "things".to_string() }),
+                ("c".to_string(), Hit {start: 9, length: 7, text: "fidgets".to_string() }),
+            ],
+        };
+
+        let hit = hint_hit_map.get_hit("b").unwrap();
+        assert_eq!(hit.text, hint_hit_map.pairs[1].1.text);
+    }
+
+    #[test]
+    fn get_hit_returns_none_when_hit_does_not_exist() {
+        let hint_hit_map = HintHitMap {
+            #[rustfmt::skip]
+            pairs: vec![
+                ("a".to_string(), Hit {start: 0, length: 5, text: "stuff".to_string() }),
+                ("b".to_string(), Hit {start: 5, length: 6, text: "things".to_string() }),
+                ("c".to_string(), Hit {start: 9, length: 7, text: "fidgets".to_string() }),
+            ],
+        };
+
+        let hit = hint_hit_map.get_hit("x");
+        assert!(hit.is_none());
+    }
+
+    #[test_case("a", true)]
+    #[test_case("x", false)]
+    fn has_hint_with_prefix_returns_expected_value(prefix: &str, expected: bool) {
+        let hint_hit_map = HintHitMap {
+            #[rustfmt::skip]
+            pairs: vec![
+                ("aa".to_string(), Hit {start: 0, length: 5, text: "stuff".to_string() }),
+                ("ab".to_string(), Hit {start: 5, length: 6, text: "things".to_string() }),
+                ("ac".to_string(), Hit {start: 9, length: 7, text: "fidgets".to_string() }),
+            ],
+        };
+
+        let has = hint_hit_map.has_hint_with_prefix(prefix);
+        assert_eq!(has, expected);
     }
 }

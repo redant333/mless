@@ -49,6 +49,27 @@ def test_can_select_from_colored_text(terminal):
     assert stderr == "", "Expected empty stderr, got something"
 
 
+@tt.with_stdin("test, test indeed")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_non_hint_keys_are_ignored(terminal):
+    """Verify that pressing keys not inside hints does not prevent selection afterwards."""
+    terminal.wait_for_stable_output()
+
+    first_word_hint = terminal.get_string_at(0, 0, 1)
+    assert first_word_hint != " ", "Expected first word hint, found nothing"
+
+    invalid_hint = "#"
+    terminal.send(invalid_hint)
+
+    terminal.send(first_word_hint)
+
+    (status, stdout, stderr) = terminal.wait_for_finished()
+
+    assert status == STATUS_OK, "The proces unexpectedly failed"
+    assert stdout == "test", "Returned stdout not as expected"
+    assert stderr == "", "Expected empty stderr, got something"
+
+
 @tt.with_stdin("123456789012345\nabcd")
 @tt.with_terminal_size(10, 10)
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])

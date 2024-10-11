@@ -6,7 +6,7 @@ use std::ops::Deref;
 
 use crossterm::style::Color;
 use hint_hit_map::{HintHitMap, Hit};
-use log::trace;
+use log::{debug, info, trace};
 use regex::Regex;
 use snafu::ResultExt;
 
@@ -110,9 +110,22 @@ impl Mode for RegexMode {
     fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeEvent> {
         self.input_buffer.push(key.key);
 
+        // Check for fully matching hints
         if let Some(hit) = self.hint_hit_map.get_hit(&self.input_buffer) {
+            let selection = hit.text.clone();
+            info!("Selected text {selection}");
+
             self.input_buffer.clear();
-            Some(ModeEvent::TextSelected(hit.text.clone()))
+            Some(ModeEvent::TextSelected(selection))
+        // Check for partially matching hints
+        } else if !self.hint_hit_map.has_hint_with_prefix(&self.input_buffer) {
+            debug!(
+                "No hints matched with the pressed key {}, ignoring",
+                key.key
+            );
+
+            self.input_buffer.pop();
+            None
         } else {
             None
         }
