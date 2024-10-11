@@ -2,13 +2,11 @@
 //!
 //! The idea behind this mode is to allow the user to provide a list
 //! of regexes, and then select part of the text that matches any of them.
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Deref,
-};
+use std::ops::Deref;
 
 use crossterm::style::Color;
-use log::{info, trace};
+use hint_hit_map::{HintHitMap, Hit};
+use log::trace;
 use regex::Regex;
 use snafu::ResultExt;
 
@@ -23,31 +21,15 @@ use crate::{
 
 use super::{Mode, ModeEvent};
 
+mod hint_hit_map;
 #[cfg(test)]
 mod tests;
-
-#[derive(Debug)]
-/// Struct that records a hit(match) that can be selected.
-struct Hit {
-    /// Byte offset of the start of the hit.
-    ///
-    /// This is represented as character offset from the first character.
-    start: usize,
-
-    /// Length of the hit in bytes.
-    length: usize,
-
-    /// The text of the hit.
-    ///
-    /// This will be returned to the user if this hit is selected.
-    text: String,
-}
 
 /// Struct representing the regex selection mode.
 pub struct RegexMode {
     /// A map between the hint (sequence of characters that select a hit) and
     /// the [Hit] struct itself containing the details of the hit.
-    hint_hit_map: Vec<(String, Hit)>,
+    hint_hit_map: HintHitMap,
 
     /// The sequence of characters pressed so far.
     ///
@@ -113,7 +95,7 @@ impl RegexMode {
                 .for_each(|hit| hits.push(hit));
         }
 
-        let hint_hit_map = into_hint_hit_map(hits, hint_generator.deref());
+        let hint_hit_map = HintHitMap::new(hits, hint_generator.deref());
 
         trace!("Constructed hint hit map {:#?}", hint_hit_map);
 
@@ -128,7 +110,7 @@ impl Mode for RegexMode {
     fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeEvent> {
         self.input_buffer.push(key.key);
 
-        let matching_hit = self.hint_hit_map.iter().find_map(|(hint, hit)| {
+        let matching_hit = self.hint_hit_map.pairs.iter().find_map(|(hint, hit)| {
             if *hint == self.input_buffer {
                 Some(hit)
             } else {
@@ -157,6 +139,7 @@ impl Mode for RegexMode {
 
         let mut highlights: Vec<StyledSegment> = self
             .hint_hit_map
+            .pairs
             .iter()
             .map(|(_, hit)| hit)
             .map(|hit| StyledSegment {
@@ -171,6 +154,7 @@ impl Mode for RegexMode {
 
         let (hint_highlights, overlays): (Vec<StyledSegment>, Vec<DataOverlay>) = self
             .hint_hit_map
+            .pairs
             .iter()
             .map(|(hint, hit)| {
                 let highlight = StyledSegment {
@@ -226,37 +210,4 @@ fn get_original_index(removed_ranges: &[(usize, usize)], index_after_removal: us
     }
 
     index_after_removal + offset_due_to_removed
-}
-
-/// Create a mapping of hints to hits from the given collection of hits and the generator.
-fn into_hint_hit_map(hits: Vec<Hit>, hint_generator: &dyn HintGenerator) -> Vec<(String, Hit)> {
-    let unique_hit_count = hits
-        .iter()
-        .map(|hit| hit.text.clone())
-        .collect::<HashSet<String>>()
-        .len();
-    info!("Number of unique hits {unique_hit_count}");
-    let hints = hint_generator.create_hints(unique_hit_count);
-    let mut hint_iter = hints.iter();
-
-    let mut hit_hint_map = HashMap::<String, String>::new();
-    let mut hint_hit_map: Vec<(String, Hit)> = vec![];
-
-    for hit in hits.into_iter() {
-        let hint = if hit_hint_map.contains_key(&hit.text) {
-            trace!("Hit <{}> already in hit_hint_map", hit.text);
-            hit_hint_map[&hit.text].clone()
-        } else if let Some(hint) = hint_iter.next() {
-            trace!("Using new hint {} for hit <{}>", hint, hit.text);
-            hit_hint_map.insert(hit.text.clone(), hint.clone());
-            hint.clone()
-        } else {
-            info!("Not enough hints for all the hits, giving up");
-            break;
-        };
-
-        hint_hit_map.push((hint, hit));
-    }
-
-    hint_hit_map
 }
