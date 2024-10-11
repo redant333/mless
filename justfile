@@ -32,8 +32,13 @@ test-venv-delete:
 # Reinitialize end to end testing venv, even if it already exists.
 test-venv-reinit: test-venv-delete test-venv-init
 
+# Build the debug executable
+build:
+    #!/bin/bash -eu
+    cargo build
+
 # Run end to end tests.
-test-e2e-run *additional_args: test-venv-init
+test-e2e-run *additional_args: test-venv-init build
     #!/bin/bash -eu
     source "{{test_venv_activate}}"
     executable_path=$(realpath {{executable_debug}})
