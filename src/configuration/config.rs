@@ -55,14 +55,14 @@ impl Config {
     {
         let hint_chars = String::deserialize(d)?;
 
-        if hint_chars.is_empty() {
-            return Err(de::Error::invalid_value(
-                Unexpected::Str(&hint_chars),
-                &"contain at least one character",
-            ));
+        if !hint_chars.is_empty() {
+            return Ok(hint_chars);
         }
 
-        Ok(hint_chars)
+        Err(de::Error::invalid_value(
+            Unexpected::Str(&hint_chars),
+            &"contain at least one character",
+        ))
     }
 
     fn validate_modes<'de, D>(d: D) -> Result<Vec<modes::Mode>, D::Error>
@@ -71,14 +71,14 @@ impl Config {
     {
         let modes = Vec::<modes::Mode>::deserialize(d)?;
 
-        if modes.is_empty() {
-            return Err(de::Error::invalid_value(
-                Unexpected::Seq,
-                &"at least one mode",
-            ));
+        if !modes.is_empty() {
+            return Ok(modes);
         }
 
-        Ok(modes)
+        Err(de::Error::invalid_value(
+            Unexpected::Seq,
+            &"at least one mode",
+        ))
     }
 
     fn default_modes() -> Vec<modes::Mode> {
@@ -136,7 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn modes_deserialization_returns_error() {
+    fn modes_deserialization_returns_error_when_empty() {
         let result = serde_yaml::from_str::<Config>("modes: []");
         result.unwrap_err();
     }
