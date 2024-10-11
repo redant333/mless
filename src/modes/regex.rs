@@ -110,15 +110,7 @@ impl Mode for RegexMode {
     fn handle_key_press(&mut self, key: KeyPress) -> Option<ModeEvent> {
         self.input_buffer.push(key.key);
 
-        let matching_hit = self.hint_hit_map.pairs.iter().find_map(|(hint, hit)| {
-            if *hint == self.input_buffer {
-                Some(hit)
-            } else {
-                None
-            }
-        });
-
-        if let Some(hit) = matching_hit {
+        if let Some(hit) = self.hint_hit_map.get_hit(&self.input_buffer) {
             self.input_buffer.clear();
             Some(ModeEvent::TextSelected(hit.text.clone()))
         } else {

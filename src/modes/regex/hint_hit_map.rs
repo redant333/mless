@@ -64,4 +64,20 @@ impl HintHitMap {
 
         Self { pairs }
     }
+
+    /// Get the first [Hit] associated with the given hint string.
+    pub fn get_hit(&self, hint: &str) -> Option<&Hit> {
+        self //
+            .pairs
+            .iter()
+            .find_map(
+                |(pair_hint, hit)| {
+                    if pair_hint == hint {
+                        Some(hit)
+                    } else {
+                        None
+                    }
+                },
+            )
+    }
 }
