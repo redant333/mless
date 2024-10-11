@@ -60,7 +60,7 @@ impl RegexArgs {
                 Ok(regex) => regexes.push(regex),
                 Err(_) => {
                     return Err(de::Error::invalid_value(
-                        Unexpected::Seq,
+                        Unexpected::Str(&regex_string),
                         &"a valid regular expression",
                     ))
                 }
