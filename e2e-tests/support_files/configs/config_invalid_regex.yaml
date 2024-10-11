@@ -1,0 +1,5 @@
+modes:
+  - mode: regex
+    hotkey: x
+    regexes:
+      - x[

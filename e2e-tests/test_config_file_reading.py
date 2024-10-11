@@ -16,6 +16,18 @@ def test_fails_with_appropriate_error_when_config_file_does_not_exist(terminal):
     assert stderr.startswith("Could not open config file "), msg
 
 
+@tt.with_arguments(["--config", config_path("config_invalid_regex.yaml")])
+def test_fails_with_appropriate_error_when_config_is_invalid(terminal):
+    """Verify that the appropriate error is shown when invalid config is used."""
+    (status, stdout, stderr) = terminal.wait_for_finished()
+
+    assert status == STATUS_ERROR, "The process returned an unexpected return code"
+    assert stdout == "", "Expected nothing on stdout, found something"
+
+    msg = "Expected error on stderr, found something else"
+    assert stderr.startswith("Could not parse config file"), msg
+
+
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])
 @tt.with_stdin("test nope test nope")
 def test_uses_the_provided_config_when_available(terminal):
