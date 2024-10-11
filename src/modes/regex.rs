@@ -84,9 +84,6 @@ impl RegexMode {
         let cleaned_data = ignore_regex.replace_all(data, "");
 
         for regex in &args.regexes {
-            let regex = Regex::new(regex) //
-                .context(InvalidRegexSnafu {})?;
-
             regex
                 .captures_iter(&cleaned_data)
                 .filter_map(|capture| {

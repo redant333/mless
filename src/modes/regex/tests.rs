@@ -18,6 +18,10 @@ fn get_draw_instructions(
     regexes: Vec<String>,
     hints: Vec<String>,
 ) -> (Vec<DataOverlay>, Vec<StyledSegment>) {
+    let regexes = regexes
+        .into_iter()
+        .map(|regex| Regex::new(&regex).unwrap())
+        .collect();
     let args = RegexArgs { regexes };
 
     let mut hint_generator = Box::new(MockHintGenerator::new());
@@ -65,9 +69,6 @@ fn produces_expected_highlights_and_overlays_for_colored_text() {
             vec![r"[a-z]{4,}".into()],
             vec!["a".into(), "b".into(), "c".into()],
         );
-
-    println!("{:#?}", text_overlays);
-    println!("{:#?}", styled_segments);
 
     assert_eq!(text_overlays.len(), 3);
     assert!(has_overlay_at_location(&text_overlays, 7));

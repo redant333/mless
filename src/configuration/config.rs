@@ -1,6 +1,7 @@
 use std::fs::File;
 
 use super::modes;
+use regex::Regex;
 use serde::{
     de::{self, Unexpected},
     Deserialize, Deserializer, Serialize,
@@ -86,7 +87,9 @@ impl Config {
             hotkey: 'w',
             description: "Select words separated by space".to_string(),
             args: modes::ModeArgs::RegexMode(modes::RegexArgs {
-                regexes: vec![r"[a-zA-Z]{5,}".to_string()],
+                // Hardcoded value that is verified to work
+                #[allow(clippy::unwrap_used)]
+                regexes: vec![Regex::new(r"[a-zA-Z]{5,}").unwrap()],
             }),
         }]
     }
