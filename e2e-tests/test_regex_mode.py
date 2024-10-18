@@ -51,7 +51,7 @@ def test_can_select_from_colored_text(terminal):
 
 @tt.with_stdin("test, test indeed")
 @tt.with_arguments(["--config", config_path("config_match_test.yaml")])
-def test_non_hint_keys_are_ignored(terminal):
+def test_non_hint_keys_do_not_affect_selection(terminal):
     """Verify that pressing keys not inside hints does not prevent selection afterwards."""
     terminal.wait_for_stable_output()
 
@@ -68,6 +68,24 @@ def test_non_hint_keys_are_ignored(terminal):
     assert status == STATUS_OK, "The proces unexpectedly failed"
     assert stdout == "test", "Returned stdout not as expected"
     assert stderr == "", "Expected empty stderr, got something"
+
+
+@tt.with_stdin("test, test indeed")
+@tt.with_arguments(["--config", config_path("config_match_test.yaml")])
+def test_non_hint_keys_do_not_affect_rendered_text(terminal):
+    """Verify that pressing keys not inside hints does not affect the rendered text."""
+    terminal.wait_for_stable_output()
+
+    width_to_check = 25
+    first_line_before = terminal.get_string_at(0, 0, width_to_check)
+
+    invalid_hint = "#"
+    terminal.send(invalid_hint)
+    terminal.wait_for_stable_output()
+
+    first_line_after = terminal.get_string_at(0, 0, width_to_check)
+
+    assert first_line_before == first_line_after, "Non hint input affected the text"
 
 
 @tt.with_stdin("123456789012345\nabcd")

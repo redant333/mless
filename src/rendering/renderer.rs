@@ -2,8 +2,8 @@
 use std::{collections::VecDeque, io::Write};
 
 use crossterm::{
-    cursor,
-    style::{self, Print},
+    cursor::{self, MoveTo},
+    style::{self, Attribute, Print, ResetColor, SetAttribute},
     terminal::{
         disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
@@ -40,8 +40,16 @@ impl<T: Write + ?Sized> Renderer<T> {
 
         // Perform rendering into a buffer first, to avoid any blinking issues
         let mut buffer: Vec<u8> = vec![];
-        self.output
+
+        // Make sure the rendering starts from a predictable state every time
+        buffer //
+            .queue(ResetColor)
+            .context(IoSnafu {})?
+            .queue(SetAttribute(Attribute::Reset))
+            .context(IoSnafu {})?
             .queue(Clear(ClearType::All))
+            .context(IoSnafu {})?
+            .queue(MoveTo(0, 0))
             .context(IoSnafu {})?;
 
         for instruction in draw_instructions {
