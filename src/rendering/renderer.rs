@@ -19,7 +19,7 @@ use crate::RunError;
 use super::ansi_sequence_extractor::AnsiSequenceExtractor;
 use super::{DataOverlay, StyledSegment, TextStyle};
 
-use super::Draw;
+use super::DrawInstruction;
 
 /// The struct intended for rendering everything to the terminal.
 ///
@@ -35,7 +35,11 @@ impl<T: Write + ?Sized> Renderer<T> {
     /// Render the given data and draw instructions to the terminal.
     ///
     /// Draw instructions are executed in the given order.
-    pub fn render(&mut self, data: &str, draw_instructions: &[Draw]) -> Result<(), RunError> {
+    pub fn render(
+        &mut self,
+        data: &str,
+        draw_instructions: &[DrawInstruction],
+    ) -> Result<(), RunError> {
         trace!("Rendering draw instructions {:#?}", draw_instructions);
 
         // Perform rendering into a buffer first, to avoid any blinking issues
@@ -54,7 +58,7 @@ impl<T: Write + ?Sized> Renderer<T> {
 
         for instruction in draw_instructions {
             match instruction {
-                Draw::StyledData {
+                DrawInstruction::StyledData {
                     styled_segments,
                     text_overlays,
                 } => {

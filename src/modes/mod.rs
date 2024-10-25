@@ -1,5 +1,5 @@
 //! Different selection modes.
-use crate::{input_handler::KeyPress, rendering::Draw};
+use crate::{input_handler::KeyPress, rendering::DrawInstruction};
 
 mod regex;
 pub use regex::RegexMode;
@@ -16,7 +16,7 @@ pub trait Mode {
     ///
     /// Note that the renderer does not display anything if the returned
     /// vector is empty.
-    fn get_draw_instructions(&self) -> Vec<Draw>;
+    fn get_draw_instructions(&self) -> Vec<DrawInstruction>;
 }
 
 /// Enum that specifies the events happening inside the mode.

@@ -15,7 +15,7 @@ use crate::{
     configuration,
     hints::HintGenerator,
     input_handler::KeyPress,
-    rendering::{DataOverlay, Draw, StyledSegment, TextStyle},
+    rendering::{DataOverlay, DrawInstruction, StyledSegment, TextStyle},
     RunError,
 };
 
@@ -131,7 +131,7 @@ impl Mode for RegexMode {
         }
     }
 
-    fn get_draw_instructions(&self) -> Vec<Draw> {
+    fn get_draw_instructions(&self) -> Vec<DrawInstruction> {
         #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
         let hint_fg = Color::parse_ansi("5;232").unwrap();
         #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
@@ -182,7 +182,7 @@ impl Mode for RegexMode {
 
         highlights.extend(hint_highlights);
 
-        vec![Draw::StyledData {
+        vec![DrawInstruction::StyledData {
             styled_segments: highlights,
             text_overlays: overlays,
         }]

@@ -3,7 +3,7 @@ use crossterm::style::Color;
 
 /// Struct to describe text style.
 ///
-/// Used in [Draw].
+/// Used in [DrawInstruction].
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TextStyle {
     pub foreground: Color,
@@ -12,7 +12,7 @@ pub struct TextStyle {
 
 /// Struct to describe a styled segment of data.
 ///
-/// Used in [Draw::StyledData].
+/// Used in [DrawInstruction::StyledData].
 #[derive(Debug)]
 pub struct StyledSegment {
     /// Byte offset of the start of the segment from the start of data.
@@ -24,7 +24,7 @@ pub struct StyledSegment {
 }
 /// Struct to describe text that is drawn over the data.
 ///
-/// Used in [Draw::StyledData].
+/// Used in [DrawInstruction::StyledData].
 #[derive(Debug)]
 pub struct DataOverlay {
     // The text to draw.
@@ -35,7 +35,7 @@ pub struct DataOverlay {
 
 /// Instruction to [super::Renderer] about what should be drawn to the screen.
 #[derive(Debug)]
-pub enum Draw {
+pub enum DrawInstruction {
     /// Draw the data, i.e. the text from which the selection is performed
     /// with parts of data in different styles and text drawn over some parts.
     ///

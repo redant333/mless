@@ -28,7 +28,7 @@ fn get_draw_instructions(
     hint_generator.expect_create_hints().return_const(hints);
 
     let mode = RegexMode::new(text, &args, hint_generator).unwrap();
-    let Draw::StyledData {
+    let DrawInstruction::StyledData {
         text_overlays,
         styled_segments,
     } = mode.get_draw_instructions().into_iter().next().unwrap();
