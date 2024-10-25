@@ -123,8 +123,8 @@ function execute_mless() {
     selected_text=$($cmd)
 
     if [[ "$selected_text" != "" ]]; then
-        if [[ $copy_pipe_command != "" ]]; then
-            echo -n "$selected_text" | $copy_pipe_command
+        if [[ "$copy_pipe_command" != "" ]]; then
+            eval "echo -n \"$selected_text\" | $copy_pipe_command"
         else
             echo -n "$selected_text" | tmux loadb -b "$BUFFER_NAME" - && tmux paste-buffer -b "$BUFFER_NAME" -t "$selection_source_pane_id"
         fi

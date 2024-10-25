@@ -22,7 +22,7 @@ function get_mless_executable() {
             echo "MLESS_PATH is set to $MLESS_PATH which is not an executable file" >&2
             exit 1
         fi
-    elif [ -x "$(command -v "mless")" ]; then # Priority two - explicitly set path
+    elif [ -x "$(command -v "mless")" ]; then # Priority two - mless in PATH
         echo "mless"
         return
     else
@@ -36,6 +36,8 @@ function get_mless_executable() {
 #   echo text | <command>
 # to place the word "text" to clipboard.
 #
+# Globals:
+#   MLESS_COPY_PIPE_COMMAND
 # Outputs:
 #   The command on stdout, if it could be determined, the error on stderror
 #   otherwise.
@@ -43,7 +45,9 @@ function get_mless_executable() {
 #   0 if the command could be determined, 1 otherwise
 ###############################################################################
 function get_copy_command() {
-    if [ -x "$(command -v xclip)" ]; then # X11
+    if [ "$MLESS_COPY_PIPE_COMMAND" != "" ]; then # Explicitly set
+        echo "$MLESS_COPY_PIPE_COMMAND"
+    elif [ -x "$(command -v xclip)" ]; then # X11
         echo "xclip -selection clipboard"
     elif [ -x "$(command -v clip.exe)" ]; then # WSL
         echo "clip.exe"
@@ -53,16 +57,16 @@ function get_copy_command() {
     fi
 }
 
-mless_copy_hotkey=${MLESS_COPY_HOTKEY-"M-z"}
-mless_select_and_paste_hotkey=${MLESS_SELECT_AND_PATE_HOTKEY-"M-q"}
+copy_hotkey=${MLESS_BIND_COPY_MODE-"M-z"}
+select_and_paste_hotkey=${MLESS_BIND_SELECT_AND_PASTE_MODE-"M-q"}
 
-mless_copy_pipe_command=$(get_copy_command)
+copy_pipe_command=$(get_copy_command)
 mless_executable=$(get_mless_executable)
 
 current_dir=$(dirname "$(realpath "$0")")
 
-tmux bind -n "$mless_copy_hotkey" \
-    run-shell "'$current_dir/mless_wrapper.sh' '$mless_executable' '$mless_copy_pipe_command'"
+tmux bind -n "$copy_hotkey" \
+    run-shell "'$current_dir/mless_wrapper.sh' '$mless_executable' '$copy_pipe_command'"
 
-tmux bind -n "$mless_select_and_paste_hotkey" \
+tmux bind -n "$select_and_paste_hotkey" \
     run-shell "'$current_dir/mless_wrapper.sh' '$mless_executable'"
