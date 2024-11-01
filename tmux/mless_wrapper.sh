@@ -144,7 +144,7 @@ picker_pane_id=$(cut -f1 -d: <<< "$picker_ids")
 side_window_id=$(cut -f2 -d: <<< "$picker_ids")
 
 # Prepare the command that will be executed to run mless in the prepared pane
-# The tr and sed parts are mean to transform the function into a one liner
+# The tr and sed parts are used to transform the function into a one liner
 execute_mless_contents=$(declare -f execute_mless | tr '\n' ' ' | sed 's/\}/; }/')
 args=" \"$selection_source_pane_id\" \"$picker_pane_id\" \"$side_window_id\" \"$CAPTURE_FILE\" \"$MLESS_EXECUTABLE\" \"$COPY_PIPE_COMMAND\" "
 
