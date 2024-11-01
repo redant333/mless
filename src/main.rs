@@ -1,3 +1,16 @@
+//! # Architecture
+//! The diagram below shows the relationship between the most important
+//! components of the system.
+#![doc = include_str!("./docs/architecture_diagram.svg")]
+//!
+//! For convenience, here are links to the mentioned structs/traits/functions:
+//! - [InputHandler]
+//! - [Action]
+//! - [run]
+//! - [Config]
+//! - [Mode]
+//! - [Renderer]
+//! - [rendering::DrawInstruction]
 mod configuration;
 mod error;
 mod hints;

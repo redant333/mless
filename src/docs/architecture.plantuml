@@ -1,0 +1,69 @@
+@startuml Architecture
+' Needed because SVG export otherwise ends up with
+' transparent background.
+skinparam backgroundColor #fefefe
+
+component Renderer
+component InputHandler
+component Mode
+component "run function" as Run
+component Config
+
+InputHandler - Action
+Run .left.> Action: use
+Action <... Mode: use
+
+Mode - ModeEvent
+Run ...> ModeEvent: use
+
+Mode -- DrawInstruction
+Renderer .> DrawInstruction: use
+
+Config -right-> Mode: determines\ndetails of
+
+note left of InputHandler
+  Provides an abstraction of raw user
+  inputs. Provides different action
+  when special combinations like
+  Ctrl+C are pressed.
+end note
+
+note left of Config
+  Loaded from the
+  config file.
+end note
+
+note left of Renderer
+  Does the actual drawing to the screen.
+  Heavilly dependent on the crossterm API.
+end note
+
+note right of ModeEvent
+  Currently, the only variant is
+  ModeEvent::TextSelected.
+  In the future, should contain
+  variants for switching modes
+  and similar.
+end note
+
+note right of DrawInstruction
+  Specifies what should be drawn to the screen.
+  Not dependent on the crossterm API.
+end note
+
+note "Contains the main selection logic.\n\
+Reacts to actions from InputHandler.\n\
+Produces DrawInstructions which \n\
+determine what gets rendered to the\n\
+screen and ModeEvents which currently\n\
+serve to inform the run functhat that\n\
+text has been selected." as Mode_note
+Mode_note .right[dotted]- Mode
+Mode_note .down[hidden]-Config
+
+note right of Run
+  Coordinates communication
+  between other components
+  and contains the main loop.
+end note
+@enduml
