@@ -36,6 +36,10 @@ pub struct DataOverlay {
 /// Instruction to [super::Renderer] about what should be drawn to the screen.
 #[derive(Debug)]
 pub enum DrawInstruction {
+    /// Draw the data without any additional processing.
+    /// Has the same effect as [DrawInstruction::StyledData] without any
+    /// styling specified.
+    Data,
     /// Draw the data, i.e. the text from which the selection is performed
     /// with parts of data in different styles and text drawn over some parts.
     ///

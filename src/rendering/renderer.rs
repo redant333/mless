@@ -64,6 +64,7 @@ impl<T: Write + ?Sized> Renderer<T> {
                 } => {
                     self.draw_styled_data(&mut buffer, data, styled_segments, text_overlays)?;
                 }
+                DrawInstruction::Data => self.draw_styled_data(&mut buffer, data, &[], &[])?,
             }
         }
 

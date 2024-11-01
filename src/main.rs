@@ -30,7 +30,7 @@ use input_handler::{Action, InputHandler};
 use log::{debug, info};
 use logging::initialize_logging;
 use modes::{Mode, ModeEvent, RegexMode};
-use rendering::Renderer;
+use rendering::{DrawInstruction, Renderer};
 use snafu::ResultExt;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read};
@@ -88,6 +88,9 @@ fn run_main_loop(
     input_text: String,
 ) -> Result<String, RunError> {
     let mut current_mode = initial_mode;
+
+    // Make sure the data is rendered as early as possible to avoid blinking
+    renderer.render(&input_text, &[DrawInstruction::Data])?;
 
     info!("Starting the loop");
     loop {
