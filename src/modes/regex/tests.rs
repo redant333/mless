@@ -28,12 +28,16 @@ fn get_draw_instructions(
     hint_generator.expect_create_hints().return_const(hints);
 
     let mode = RegexMode::new(text, &args, hint_generator).unwrap();
-    let DrawInstruction::StyledData {
-        text_overlays,
-        styled_segments,
-    } = mode.get_draw_instructions().into_iter().next().unwrap();
+    match mode.get_draw_instructions().into_iter().next().unwrap() {
+        DrawInstruction::Data => {
+            panic!("RegexMode::get_draw_instructions() returned unexpected type")
+        }
 
-    (text_overlays, styled_segments)
+        DrawInstruction::StyledData {
+            styled_segments,
+            text_overlays,
+        } => (text_overlays, styled_segments),
+    }
 }
 
 #[test]
