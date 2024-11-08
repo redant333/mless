@@ -128,7 +128,7 @@ def test_can_select_text_from_text_with_non_ascii_characters(terminal):
     # Assume the first hint is q since pytest-tuitest gets confused with
     # 😀 and thinks it's two characters.
     # TODO Update this to dynamically retrieve the hint once pytest-tuitest problem is fixed
-    terminal.send("q")
+    terminal.send("f")
 
     (status, stdout, stderr) = terminal.wait_for_finished()
 

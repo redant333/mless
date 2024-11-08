@@ -47,7 +47,7 @@ impl Default for Config {
 
 impl Config {
     fn default_hint_characters() -> String {
-        "qwertyuiopasdfghjklzxcvbnm".into()
+        "fdsajkl;weiocmruvnghqpxztyb".into()
     }
 
     fn validate_hint_characters<'de, D>(d: D) -> Result<String, D::Error>
@@ -84,12 +84,12 @@ impl Config {
 
     fn default_modes() -> Vec<modes::Mode> {
         vec![modes::Mode {
-            hotkey: 'w',
-            description: "Select words separated by space".to_string(),
+            hotkey: 'g',
+            description: "General".to_string(),
             args: modes::ModeArgs::RegexMode(modes::RegexArgs {
                 // Hardcoded value that is verified to work
                 #[allow(clippy::unwrap_used)]
-                regexes: vec![Regex::new(r"[a-zA-Z]{5,}").unwrap()],
+                regexes: vec![Regex::new(r"[\w._\-~/]{4,}").unwrap()],
             }),
         }]
     }
