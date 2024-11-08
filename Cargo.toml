@@ -1,5 +1,5 @@
 [package]
-name = "mouseless-selector"
+name = "mless"
 description = "CLI tool to make mouseless selection in the terminal easier."
 version = "0.1.0"
 edition = "2021"

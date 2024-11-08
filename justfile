@@ -2,7 +2,7 @@ e2e_tests_dir := "e2e-tests"
 test_venv_path := e2e_tests_dir / "venv"
 test_venv_activate := test_venv_path / "bin" / "activate"
 test_venv_requirements := e2e_tests_dir / "requirements.txt"
-executable_debug := "target/debug/mouseless-selector"
+executable_debug := "target/debug/mless"
 
 # Initialize end to end testing venv. Does nothing if it already exists.
 test-venv-init:
