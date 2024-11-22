@@ -4,7 +4,7 @@ use super::{modes, DEFAULT_CONFIG_FILE};
 use regex::Regex;
 use serde::{
     de::{self, Unexpected},
-    Deserialize, Deserializer, Serialize,
+    Deserialize, Deserializer,
 };
 use snafu::{ResultExt, Snafu};
 
@@ -20,7 +20,7 @@ pub enum Error {
 /// All of its fields have default values to enable starting without
 /// any config specified and to enable config files to override only
 /// some of the fields.
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Config {
     /// Characters that can be used by structs implementing [modes::Mode]
     /// trait.
@@ -118,16 +118,6 @@ mod tests {
         let config: Config = serde_yaml::from_str("hint_characters: asdf").unwrap();
 
         assert_eq!(config.hint_characters, "asdf");
-    }
-
-    #[test]
-    fn default_config_can_be_serialized() {
-        let config = Config {
-            ..Default::default()
-        };
-        let serialized = serde_yaml::to_string(&config).unwrap();
-
-        assert!(!serialized.is_empty());
     }
 
     #[test]

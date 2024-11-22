@@ -1,11 +1,11 @@
 use regex::Regex;
 use serde::{
     de::{self, Unexpected},
-    Deserialize, Deserializer, Serialize, Serializer,
+    Deserialize, Deserializer,
 };
 
 /// Structure describing a mode instance in the configuration file.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Mode {
     /// Mode specific arguments that define this mode.
     #[serde(flatten)]
@@ -13,7 +13,7 @@ pub struct Mode {
 }
 
 /// Arguments that specify the details of the mode.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(tag = "mode")]
 pub enum ModeArgs {
     #[serde(rename = "regex")]
@@ -21,7 +21,7 @@ pub enum ModeArgs {
 }
 
 /// Arguments for [crate::modes::RegexMode].
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct RegexArgs {
     /// The list of regexes that the mode will use for selections.
     #[serde(deserialize_with = "RegexArgs::deserialize_regexes")]
@@ -59,14 +59,6 @@ impl RegexArgs {
         }
 
         Ok(regexes)
-    }
-
-    fn serialize_regexes<S>(regexes: &[Regex], serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let regex_strings: Vec<&str> = regexes.iter().map(|regex| regex.as_str()).collect();
-        regex_strings.serialize(serializer)
     }
 }
 
