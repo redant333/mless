@@ -84,8 +84,6 @@ impl Config {
 
     fn default_modes() -> Vec<modes::Mode> {
         vec![modes::Mode {
-            hotkey: 'g',
-            description: "General".to_string(),
             args: modes::ModeArgs::RegexMode(modes::RegexArgs {
                 // Hardcoded value that is verified to work
                 #[allow(clippy::unwrap_used)]

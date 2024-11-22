@@ -7,15 +7,6 @@ use serde::{
 /// Structure describing a mode instance in the configuration file.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Mode {
-    /// The hotkey that is used to enter the mode.
-    pub hotkey: char,
-    /// Description of the mode.
-    ///
-    /// This is only used in situations when more information needs to
-    /// be presented about the mode instance.
-    /// Defaults to empty string if not provided.
-    #[serde(default)]
-    pub description: String,
     /// Mode specific arguments that define this mode.
     #[serde(flatten)]
     pub args: ModeArgs,
@@ -87,21 +78,12 @@ mod tests {
     fn regex_mode_can_be_deserialized() {
         let string = "
             mode: regex
-            description: Select things and stuff
-            hotkey: x
             regexes:
                 - regex1
                 - regex2
         ";
 
-        let Mode {
-            hotkey,
-            description,
-            args,
-        } = serde_yaml::from_str(string).unwrap();
-
-        assert_eq!(hotkey, 'x');
-        assert_eq!(description, "Select things and stuff");
+        let Mode { args } = serde_yaml::from_str(string).unwrap();
 
         let ModeArgs::RegexMode(regex_args) = args;
 
@@ -110,39 +92,9 @@ mod tests {
     }
 
     #[test]
-    fn deserialization_returns_error_when_hotkey_too_long() {
-        let string = "
-            mode: regex
-            description: Select things and stuff
-            hotkey: xy
-            regexes:
-                - regex1
-                - regex2
-        ";
-
-        let result = serde_yaml::from_str::<Mode>(string);
-        result.unwrap_err();
-    }
-
-    #[test]
-    fn description_defaults_to_empty_string_if_not_provided() {
-        let string = "
-            mode: regex
-            hotkey: x
-            regexes:
-                - regex1
-                - regex2
-        ";
-
-        let Mode { description, .. } = serde_yaml::from_str(string).unwrap();
-        assert_eq!(description, "");
-    }
-
-    #[test]
     fn deserialization_fails_if_no_regexes_are_provided() {
         let string = "
             mode: regex
-            hotkey: x
             regexes: []
         ";
 
@@ -154,7 +106,6 @@ mod tests {
     fn deserialization_fails_if_invalid_regex_is_provided() {
         let string = "
             mode: regex
-            hotkey: x
             regexes:
                 - x[
         ";
