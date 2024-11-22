@@ -10,13 +10,12 @@ use log::{debug, info, trace};
 use regex::Regex;
 use snafu::ResultExt;
 
-use crate::error::InvalidRegexSnafu;
+use crate::error::{InvalidRegexSnafu, RunError};
 use crate::{
     configuration,
     hints::HintGenerator,
     input_handler::KeyPress,
     rendering::{DataOverlay, DrawInstruction, StyledSegment, TextStyle},
-    RunError,
 };
 
 use super::{Mode, ModeEvent};

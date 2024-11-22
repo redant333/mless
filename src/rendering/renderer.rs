@@ -14,7 +14,7 @@ use log::trace;
 use snafu::ResultExt;
 
 use crate::error::IoSnafu;
-use crate::RunError;
+use crate::error::RunError;
 
 use super::ansi_sequence_extractor::AnsiSequenceExtractor;
 use super::{DataOverlay, StyledSegment, TextStyle};
