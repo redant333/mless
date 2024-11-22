@@ -33,6 +33,11 @@ fn main() {
 
     let args = Args::parse();
 
+    if args.show_default_config {
+        println!("{}", configuration::DEFAULT_CONFIG_FILE);
+        exit(EXIT_SUCCESS);
+    }
+
     match run(args) {
         Ok(selection) => {
             print!("{}", selection);

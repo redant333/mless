@@ -22,3 +22,20 @@ def test_can_display_help(terminal):
 
     msg = "Expected stdout to contain word 'Options', not found"
     assert "Options" in stdout, msg
+
+
+@tt.with_arguments(["--show-default-config"])
+def test_shows_default_config_when_requested(terminal):
+    """Verify that the default config is shown when run with --show-default-config."""
+    (status, stdout, stderr) = terminal.wait_for_finished()
+
+    msg = "Expected program to finish successfully, got non-zero exit status"
+    assert status == STATUS_OK, msg
+
+    assert stderr == "", "Expected empty stderr, got something else"
+
+    msg = "Expected stdout to contain a field for hint characters, not found"
+    assert "hint_characters:" in stdout, msg
+
+    msg = "Expected stdout to contain a field for modes, not found"
+    assert "modes:" in stdout, msg
