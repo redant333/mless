@@ -54,9 +54,14 @@ test-unit-run:
 
 alias t := test-unit-run
 
+# Build the documentation
+build-doc:
+    #!/bin/bash -e
+    RUSTDOCFLAGS="-D warnings" cargo doc
+
 # Run all tests.
-test-all-run: test-unit-run test-e2e-run
-alias a := test-all-run
+all-checks: test-unit-run test-e2e-run build-doc
+alias a := all-checks
 
 # Run all pre-commit checks.
 pre-commit:
