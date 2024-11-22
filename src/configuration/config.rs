@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use super::modes;
+use super::{modes, DEFAULT_CONFIG_FILE};
 use regex::Regex;
 use serde::{
     de::{self, Unexpected},
@@ -38,10 +38,10 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            hint_characters: Config::default_hint_characters(),
-            modes: Config::default_modes(),
-        }
+        // Can only fail if the config file has unexpected structure.
+        // DEFAULT_CONFIG_FILE is a known static string.
+        #[allow(clippy::unwrap_used)]
+        serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap()
     }
 }
 
@@ -140,5 +140,15 @@ mod tests {
     fn modes_deserialization_returns_error_when_empty() {
         let result = serde_yaml::from_str::<Config>("modes: []");
         result.unwrap_err();
+    }
+
+    #[test]
+    /// This is necessary to allow them to be omitted in the config
+    /// without confusing the user.
+    fn omitted_hint_characters_default_to_the_value_in_default_config() {
+        let default_config = Config::default();
+        let config_with_default_fields = serde_yaml::from_str::<Config>("").unwrap();
+
+        assert!(default_config.hint_characters == config_with_default_fields.hint_characters);
     }
 }

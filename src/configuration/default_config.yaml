@@ -1,0 +1,6 @@
+hint_characters: fdsajkl;weiocmruvnghqpxztyb
+modes:
+  - description: General
+    mode: regex
+    regexes:
+      - '[\w._\-~/]{4,}'
