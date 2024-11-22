@@ -1,6 +1,16 @@
+# The characters that will be used to construct the hints.
+# Character at the beginning of the list have priority in
+# hint generation.
+# Defaults to "fdsajkl;weiocmruvnghqpxztyb" if not specified.
 hint_characters: fdsajkl;weiocmruvnghqpxztyb
+# The list of different selection modes. Currently, only
+# the first mode is used.
 modes:
-  - description: General
-    mode: regex
+  # The type of the mode. Currently, the only supported type
+  # is "regex" which accepts a list of regular expressions
+  # and uses them to select the text.
+  - mode: regex
+    # The list of regular expressions to use for matching.
+    # Note that lookaround is not supported.
     regexes:
       - '[\w._\-~/]{4,}'

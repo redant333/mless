@@ -1,5 +1,7 @@
 """Tests that don't require user interaction apart from running."""
 
+import re
+
 import pytest_tuitest as tt
 from utils import STATUS_OK
 
@@ -37,5 +39,5 @@ def test_shows_default_config_when_requested(terminal):
     msg = "Expected stdout to contain a field for hint characters, not found"
     assert "hint_characters:" in stdout, msg
 
-    msg = "Expected stdout to contain a field for modes, not found"
-    assert "modes:" in stdout, msg
+    msg = "Expected stdout to at least one documentation comment, not found"
+    assert re.search(r"^ *#.+$", stdout, flags=re.MULTILINE) is not None, msg
