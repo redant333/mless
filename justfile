@@ -48,9 +48,9 @@ test-e2e-run *additional_args: test-venv-init build
 alias e := test-e2e-run
 
 # Run unit tests.
-test-unit-run:
+test-unit-run *additional_args:
     #!/bin/bash -eu
-    cargo test
+    cargo test {{additional_args}}
 
 alias t := test-unit-run
 
