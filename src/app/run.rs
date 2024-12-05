@@ -9,7 +9,7 @@ use log::{debug, info};
 use snafu::ResultExt;
 
 use crate::{
-    app::configuration_handling::load_config,
+    app::configuration_handling::{get_config_file_location, load_config},
     configuration::ModeArgs,
     error::{CouldNotReadInputSnafu, RunError, TerminalHandlingSnafu, TtyOpenSnafu},
     hints::HintPoolGenerator,
@@ -84,7 +84,12 @@ pub fn run(args: Args) -> Result<String, RunError> {
     initialize_logging()?;
     info!("Initializing");
 
-    let config = load_config(args.config)?;
+    let config_path = if let Some(path) = args.config {
+        Some(path)
+    } else {
+        get_config_file_location()
+    };
+    let config = load_config(config_path)?;
 
     let input_handler = InputHandler::from_config(&config);
     let mut renderer = create_renderer()?;
