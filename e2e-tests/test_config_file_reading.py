@@ -49,3 +49,17 @@ def test_uses_the_provided_config_when_available(terminal):
 
     assert terminal.get_string_at(0, 15, 1) != " ", msg_no_output
     assert terminal.get_background_at(0, 15) == tt.Color16.DEFAULT, msg_not_marked
+
+
+@tt.with_stdin("direct_home\nhome_config\nxdg_home")
+@tt.with_env({"HOME": config_path("home_only_direct_config")})
+def test_uses_config_file_from_home_when_not_present_in_other_locations(terminal):
+    """Verify that $HOME/.mless.yaml config is used if other configs are not available."""
+    terminal.wait_for_stable_output()
+
+    msg = "Expected the word on this location to be marked, actually unmarked"
+    assert terminal.get_background_at(0, 0) != tt.Color16.DEFAULT, msg
+
+    msg = "Expected the word on this location to be unmarked, actually marked"
+    assert terminal.get_background_at(1, 0) == tt.Color16.DEFAULT, msg
+    assert terminal.get_background_at(2, 0) == tt.Color16.DEFAULT, msg

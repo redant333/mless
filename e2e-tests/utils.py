@@ -13,8 +13,8 @@ COLOR_BG_BLUE = "\033[44m"
 ANSI_RESET = "\033[0m"
 
 
-def config_path(config_name):
-    """Return the full path to the supporting config given the supporting config name."""
+def config_path(path):
+    """Return the full path given the path relative to supporting configs directory."""
     supporting_configs_dir = Path(__file__).parent / "support_files" / "configs"
 
-    return supporting_configs_dir / config_name
+    return supporting_configs_dir / path
