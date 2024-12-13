@@ -53,11 +53,11 @@ fn get_config_file_location_impl(
 ) -> Option<PathBuf> {
     let get_config_from = |env, path| get_config_from(env, path, file_exists, get_env_var);
 
-    if let Some(path) = get_config_from("XDG_CONFIG_HOME", "mless/mless.conf") {
+    if let Some(path) = get_config_from("XDG_CONFIG_HOME", "mless/mless.yaml") {
         Some(path)
-    } else if let Some(path) = get_config_from("HOME", ".config/mless/mless.conf") {
+    } else if let Some(path) = get_config_from("HOME", ".config/mless/mless.yaml") {
         Some(path)
-    } else if let Some(path) = get_config_from("HOME", ".mless.conf") {
+    } else if let Some(path) = get_config_from("HOME", ".mless.yaml") {
         Some(path)
     } else {
         None
@@ -67,9 +67,9 @@ fn get_config_file_location_impl(
 /// Get the config file location.
 ///
 /// The following paths are checked in this order:
-/// - `$XDG_CONFIG_HOME/mless/mless.conf`
-/// - `$HOME/.config/mless/mless.conf`
-/// - `$HOME/.mless.conf`
+/// - `$XDG_CONFIG_HOME/mless/mless.yaml`
+/// - `$HOME/.config/mless/mless.yaml`
+/// - `$HOME/.mless.yaml`
 ///
 /// The first two are defined in [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/#variables)
 /// and the third one is a common configuration pattern.
@@ -108,48 +108,48 @@ mod tests {
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.xdg_config/mless/mless.conf"],
-        PathBuf::from("/home/user/.xdg_config/mless/mless.conf"); "when_only_xdg_config_file_exists")]
+        &["/home/user/.xdg_config/mless/mless.yaml"],
+        PathBuf::from("/home/user/.xdg_config/mless/mless.yaml"); "when_only_xdg_config_file_exists")]
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.config/mless/mless.conf"],
-        PathBuf::from("/home/user/.config/mless/mless.conf"); "when_only_home_config_file_exists")]
+        &["/home/user/.config/mless/mless.yaml"],
+        PathBuf::from("/home/user/.config/mless/mless.yaml"); "when_only_home_config_file_exists")]
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.mless.conf"],
-        PathBuf::from("/home/user/.mless.conf"); "when_only_home_file_exists")]
+        &["/home/user/.mless.yaml"],
+        PathBuf::from("/home/user/.mless.yaml"); "when_only_home_file_exists")]
     #[test_case(
         Err(VarError::NotPresent),
         Ok("/home/user".to_string()),
-        &["/home/user/.config/mless/mless.conf"],
-        PathBuf::from("/home/user/.config/mless/mless.conf"); "when_xdg_config_is_not_defined_and_home_config_exists")]
+        &["/home/user/.config/mless/mless.yaml"],
+        PathBuf::from("/home/user/.config/mless/mless.yaml"); "when_xdg_config_is_not_defined_and_home_config_exists")]
     #[test_case(
         Err(VarError::NotPresent),
         Ok("/home/user".to_string()),
-        &["/home/user/.mless.conf"],
-        PathBuf::from("/home/user/.mless.conf"); "when_xdg_config_is_not_defined_and_home_does_not_exist")]
+        &["/home/user/.mless.yaml"],
+        PathBuf::from("/home/user/.mless.yaml"); "when_xdg_config_is_not_defined_and_home_does_not_exist")]
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.xdg_config/mless/mless.conf", "/home/user/.config/mless/mless.conf"],
-        PathBuf::from("/home/user/.xdg_config/mless/mless.conf"); "when_xdg_config_and_home_config_exist")]
+        &["/home/user/.xdg_config/mless/mless.yaml", "/home/user/.config/mless/mless.yaml"],
+        PathBuf::from("/home/user/.xdg_config/mless/mless.yaml"); "when_xdg_config_and_home_config_exist")]
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.xdg_config/mless/mless.conf", "/home/user/.mless.conf"],
-        PathBuf::from("/home/user/.xdg_config/mless/mless.conf"); "when_xdg_config_and_home_file_exist")]
+        &["/home/user/.xdg_config/mless/mless.yaml", "/home/user/.mless.yaml"],
+        PathBuf::from("/home/user/.xdg_config/mless/mless.yaml"); "when_xdg_config_and_home_file_exist")]
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.config/mless/mless.conf", "/home/user/.mless.conf"],
-        PathBuf::from("/home/user/.config/mless/mless.conf"); "when_home_config_and_home_file_exist")]
+        &["/home/user/.config/mless/mless.yaml", "/home/user/.mless.yaml"],
+        PathBuf::from("/home/user/.config/mless/mless.yaml"); "when_home_config_and_home_file_exist")]
     #[test_case(
         Ok("/home/user/.xdg_config".to_string()),
         Ok("/home/user".to_string()),
-        &["/home/user/.config/mless/mless.conf", "/home/user/.xdg_config/mless/mless.conf", "/home/user/.mless.conf"],
-        PathBuf::from("/home/user/.xdg_config/mless/mless.conf"); "when_all_three_files_exist")]
+        &["/home/user/.config/mless/mless.yaml", "/home/user/.xdg_config/mless/mless.yaml", "/home/user/.mless.yaml"],
+        PathBuf::from("/home/user/.xdg_config/mless/mless.yaml"); "when_all_three_files_exist")]
     fn get_config_file_location_returns_expected_value(
         xdg_config_home: Result<String, VarError>,
         home: Result<String, VarError>,
