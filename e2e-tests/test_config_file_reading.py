@@ -63,3 +63,22 @@ def test_uses_config_file_from_home_when_not_present_in_other_locations(terminal
     msg = "Expected the word on this location to be unmarked, actually marked"
     assert terminal.get_background_at(1, 0) == tt.Color16.DEFAULT, msg
     assert terminal.get_background_at(2, 0) == tt.Color16.DEFAULT, msg
+
+
+@tt.with_stdin("direct_home\nhome_config\nxdg_home")
+@tt.with_env(
+    {
+        "HOME": config_path("home_all_three_configs"),
+        "XDG_CONFIG_HOME": config_path("home_all_three_configs/xdg_config_home"),
+    }
+)
+def test_uses_config_file_from_xdg_home_when_xdg_home_defined(terminal):
+    """Verify that the config from $XDG_CONFIG_HOME is preferred when defined."""
+    terminal.wait_for_stable_output()
+
+    msg = "Expected the word on this location to be marked, actually unmarked"
+    assert terminal.get_background_at(2, 0) != tt.Color16.DEFAULT, msg
+
+    msg = "Expected the word on this location to be unmarked, actually marked"
+    assert terminal.get_background_at(0, 0) == tt.Color16.DEFAULT, msg
+    assert terminal.get_background_at(1, 0) == tt.Color16.DEFAULT, msg

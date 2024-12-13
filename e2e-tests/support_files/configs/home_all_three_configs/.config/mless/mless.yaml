@@ -1,0 +1,6 @@
+modes:
+  - mode: regex
+    description: Select only 'home_config'
+    hotkey: x
+    regexes:
+      - home_config

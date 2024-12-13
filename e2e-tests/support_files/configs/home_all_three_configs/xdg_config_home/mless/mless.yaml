@@ -1,0 +1,6 @@
+modes:
+  - mode: regex
+    description: Select only 'xdg_home'
+    hotkey: x
+    regexes:
+      - xdg_home
