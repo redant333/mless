@@ -57,8 +57,8 @@ function get_copy_command() {
     fi
 }
 
-copy_hotkey=${MLESS_BIND_COPY_MODE-"M-z"}
-select_and_paste_hotkey=${MLESS_BIND_SELECT_AND_PASTE_MODE-"M-q"}
+copy_hotkey=${MLESS_BIND_COPY_MODE-"M-f"}
+select_and_paste_hotkey=${MLESS_BIND_SELECT_AND_PASTE_MODE-"M-c"}
 
 copy_pipe_command=$(get_copy_command)
 mless_executable=$(get_mless_executable)
