@@ -5,11 +5,11 @@ the terminal easier.
 It allows you to either pipe the text into it and select it
 by using displayed hints:
 
-TODO Add Asciinema about this when the regexes are stable
+![Direct CLI usage](./resources/cli_usage.gif)
 
 or to use it inside tmux to grab the text on the screen:
 
-TODO Add Asciinema about this when the regexes are stable
+![tmux usage](./resources/tmux_usage.gif)
 
 # How do I install it?
 Clone the repostiory, build it with `cargo build --release`
