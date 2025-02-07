@@ -37,7 +37,7 @@ The full list of all the variables and their defaults:
     - If not specified, `mless` executable from `$PATH` is used
 - `MLESS_BIND_COPY_MODE`
     - Binding to run `mless` in copy mode. Uses the same format as `tmux`.
-    - Default: `M-c`
+    - Default: `M-f`
 - `MLESS_COPY_PIPE_COMMAND`
     - The command to which the selected text is piped when selected in the copy mode.
     - If not set, the first applicable command from this list:
@@ -45,4 +45,4 @@ The full list of all the variables and their defaults:
         - If `clip.exe` is avaialbe: `clip.exe`
 - `MLESS_BIND_SELECT_AND_PASTE_MODE`
     - Binding to run `mless` in select and paste mode.
-    - Default: `M-f`
+    - Default: `M-c`
