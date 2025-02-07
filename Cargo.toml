@@ -25,3 +25,6 @@ expect_used = "deny"
 unwrap_used = "deny"
 panic = "deny"
 unimplemented = "deny"
+
+[profile.release]
+strip = true
