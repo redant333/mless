@@ -18,7 +18,9 @@ Place [mless.tmux](./mless.tmux) and [mless_wrapper.sh](./mless_wrapper.sh) in t
 run-shell /path/to/mless.tmux
 ```
 
-`mless` needs to be available in `$PATH` or pointed to with `MLESS_PATH` environment variable
+`mless` needs to be available in `$PATH` or pointed to with `MLESS_PATH` environment variable.
+
+`mless.tmux` and `mless_wrapper.sh` need to be executable.
 
 ## Configuration
 The behavior can be configured by setting environment variables with:
@@ -46,3 +48,10 @@ The full list of all the variables and their defaults:
 - `MLESS_BIND_SELECT_AND_PASTE_MODE`
     - Binding to run `mless` in select and paste mode.
     - Default: `M-c`
+
+## Known problems
+### Can't detect copy command
+If none of the following is true, the configuration will silently fail:
+- `MLESS_COPY_PIPE_COMMAND` is defined
+- `xclip` can be found in the `$PATH`
+- `clip.exe` can be found in the `$PATH`
