@@ -2,6 +2,16 @@
 set -e
 
 ###############################################################################
+# Display the given message on the next tmux session start
+#
+# Arguments:
+#   The message to be displayed
+###############################################################################
+function display_message() {
+    tmux set-hook -g session-created "display-message -d 0 '$1' ; set-hook -ug session-created"
+}
+
+###############################################################################
 # Determine the command that can be used to run mless. This uses either the
 # value of MLESS_PATH variable or searches PATH.
 #
@@ -19,14 +29,14 @@ function get_mless_executable() {
             echo "$MLESS_PATH"
             return
         else
-            echo "MLESS_PATH is set to $MLESS_PATH which is not an executable file" >&2
+            display_message "MLESS_PATH is set to $MLESS_PATH which is not an executable file"
             exit 1
         fi
     elif [ -x "$(command -v "mless")" ]; then # Priority two - mless in PATH
         echo "mless"
         return
     else
-        echo "mless is not available. Make it available in PATH or set environment variable MLESS_PATH" >&2
+        display_message "mless is not available. Make it available in PATH or set environment variable MLESS_PATH"
         exit 1
     fi
 }
@@ -52,7 +62,7 @@ function get_copy_command() {
     elif [ -x "$(command -v clip.exe)" ]; then # WSL
         echo "clip.exe"
     else
-        echo "Could not detect copy command, set environment variable MLESS_COPY_PIPE_COMMAND" >&2
+        display_message "Could not detect copy command, set environment variable MLESS_COPY_PIPE_COMMAND"
         exit 1
     fi
 }
