@@ -4,6 +4,7 @@ pub use config::Config;
 pub use config::Error;
 
 mod modes;
+pub use modes::Mode;
 pub use modes::ModeArgs;
 pub use modes::RegexArgs;
 

@@ -10,9 +10,9 @@ use snafu::ResultExt;
 
 use crate::{
     app::configuration_handling::{get_config_file_location, load_config},
-    configuration::ModeArgs,
+    configuration::{self, ModeArgs},
     error::{CouldNotReadInputSnafu, RunError, TerminalHandlingSnafu, TtyOpenSnafu},
-    hints::HintPoolGenerator,
+    hints::{HintGenerator, HintPoolGenerator},
     input_handler::{Action, InputHandler},
     logging::initialize_logging,
     modes::{Mode, ModeEvent, RegexMode},
@@ -54,11 +54,13 @@ fn get_input_text(args: &Args) -> Result<String, RunError> {
 
 fn run_main_loop(
     input_handler: InputHandler,
-    initial_mode: RegexMode,
+    hint_generator: Box<dyn HintGenerator>,
+    modes: &[configuration::Mode],
     renderer: &mut Renderer<File>,
     input_text: String,
 ) -> Result<String, RunError> {
-    let mut current_mode = initial_mode;
+    let ModeArgs::RegexMode(args) = &modes[0].args;
+    let mut current_mode = RegexMode::new(&input_text, args, hint_generator)?;
 
     // Make sure the data is rendered as early as possible to avoid blinking
     renderer.render(&input_text, &[DrawInstruction::Data])?;
@@ -116,16 +118,19 @@ pub fn run(args: Args) -> Result<String, RunError> {
 
     let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
 
-    let ModeArgs::RegexMode(args) = &config.modes[0].args;
-    let initial_mode = RegexMode::new(&input_text, args, hint_generator)?;
-
     renderer
         .initialize_terminal()
         .context(TerminalHandlingSnafu {
             operation: "initialize",
         })?;
 
-    let ret = run_main_loop(input_handler, initial_mode, &mut renderer, input_text);
+    let ret = run_main_loop(
+        input_handler,
+        hint_generator,
+        &config.modes,
+        &mut renderer,
+        input_text,
+    );
 
     renderer
         .uninitialize_terminal()
