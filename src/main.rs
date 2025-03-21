@@ -19,6 +19,7 @@ mod hints;
 mod input_handler;
 mod logging;
 mod modes;
+mod pager;
 mod rendering;
 
 use std::process::exit;
