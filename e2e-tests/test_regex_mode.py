@@ -125,10 +125,10 @@ def test_can_select_text_from_text_with_non_ascii_characters(terminal):
     """Verify that non-ASCII characters don't interfere with text selection."""
     terminal.wait_for_stable_output()
 
-    # Assume the first hint is q since pytest-tuitest gets confused with
-    # 😀 and thinks it's two characters.
-    # TODO Update this to dynamically retrieve the hint once pytest-tuitest problem is fixed
-    terminal.send("f")
+    # Note that the emojis are taking two spaces when rendered
+    # so we expect the hint at position 6 and not 5
+    hint_text = terminal.get_string_at(0, 6, 1)
+    terminal.send(hint_text)
 
     (status, stdout, stderr) = terminal.wait_for_finished()
 
