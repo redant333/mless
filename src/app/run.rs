@@ -35,6 +35,23 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
     Ok(renderer)
 }
 
+fn get_input_text(args: &Args) -> Result<String, RunError> {
+    let input_text = match &args.file {
+        Some(path) => {
+            std::fs::read_to_string(path) //
+                .context(CouldNotReadInputSnafu {})?
+        }
+        None => {
+            let mut ret = "".to_string();
+            io::stdin()
+                .read_to_string(&mut ret) //
+                .context(CouldNotReadInputSnafu {})?;
+            ret
+        }
+    };
+    Ok(input_text)
+}
+
 fn run_main_loop(
     input_handler: InputHandler,
     initial_mode: RegexMode,
@@ -84,29 +101,18 @@ pub fn run(args: Args) -> Result<String, RunError> {
     initialize_logging()?;
     info!("Initializing");
 
-    let config_path = if let Some(path) = args.config {
-        Some(path)
-    } else {
-        get_config_file_location()
+    let config_path = match &args.config {
+        Some(path) => Some(path.clone()),
+        None => get_config_file_location(),
     };
     let config = load_config(config_path)?;
 
     let input_handler = InputHandler::from_config(&config);
     let mut renderer = create_renderer()?;
 
-    let input_text = match args.file {
-        Some(path) => {
-            std::fs::read_to_string(path) //
-                .context(CouldNotReadInputSnafu {})?
-        }
-        None => {
-            let mut ret = "".to_string();
-            io::stdin()
-                .read_to_string(&mut ret) //
-                .context(CouldNotReadInputSnafu {})?;
-            ret
-        }
-    };
+    // This approach is not ideal since it reads the whole input text
+    // while only using one screen of text but it should be OK for now
+    let input_text = get_input_text(&args)?;
 
     let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
 
