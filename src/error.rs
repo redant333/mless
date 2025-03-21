@@ -33,13 +33,12 @@ pub enum RunError {
         source: io::Error,
     },
 
-    /// Could not initialize/uninitialize the terminal.
-    /// There is no guarantee that the terminal was left in a correct state.
-    #[snafu(display("Could not {operation} the terminal\n{source}"))]
+    /// Terminal operation failed
+    #[snafu(display("Terminal operation '{operation}' failed\n{source}"))]
     TerminalHandling {
         /// The source error that caused this [RunError].
         source: io::Error,
-        /// The operation that failed. Should be "initialize" or "uninitialize".
+        /// The operation that failed.
         operation: String,
     },
 

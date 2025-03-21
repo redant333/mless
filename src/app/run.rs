@@ -1,10 +1,11 @@
 //! Initialization, main loop and similar.
 use std::{
     fs::{File, OpenOptions},
-    io::{self, Read},
+    io::{self, BufReader, Read},
+    ops::Deref,
 };
 
-use crossterm::event::read;
+use crossterm::{event::read, terminal};
 use log::{debug, info};
 use snafu::ResultExt;
 
@@ -16,6 +17,7 @@ use crate::{
     input_handler::{Action, InputHandler},
     logging::initialize_logging,
     modes::{Mode, ModeEvent, RegexMode},
+    pager::get_page,
     rendering::{DrawInstruction, Renderer},
 };
 
@@ -35,6 +37,17 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
     Ok(renderer)
 }
 
+fn create_mode(
+    input_text: &str,
+    hint_generator: &dyn HintGenerator,
+    args: &configuration::ModeArgs,
+) -> Result<RegexMode, RunError> {
+    let ModeArgs::RegexMode(args) = args;
+    let mode = RegexMode::new(input_text, args, hint_generator)?;
+
+    Ok(mode)
+}
+
 fn get_input_text(args: &Args) -> Result<String, RunError> {
     let input_text = match &args.file {
         Some(path) => {
@@ -52,23 +65,35 @@ fn get_input_text(args: &Args) -> Result<String, RunError> {
     Ok(input_text)
 }
 
+fn get_input_page(input_text: &str) -> Result<String, RunError> {
+    let (cols, rows) = terminal::size() //
+        .context(TerminalHandlingSnafu {
+            operation: "get size",
+        })?;
+
+    let mut input_buffer = BufReader::new(input_text.as_bytes());
+    let input_page = get_page(&mut input_buffer, rows as usize, cols as usize);
+
+    Ok(input_page)
+}
+
 fn run_main_loop(
     input_handler: InputHandler,
-    hint_generator: Box<dyn HintGenerator>,
+    hint_generator: &dyn HintGenerator,
     modes: &[configuration::Mode],
     renderer: &mut Renderer<File>,
     input_text: String,
 ) -> Result<String, RunError> {
-    let ModeArgs::RegexMode(args) = &modes[0].args;
-    let mut current_mode = RegexMode::new(&input_text, args, hint_generator)?;
+    let mut input_page = get_input_page(&input_text)?;
+    let mut current_mode = create_mode(&input_text, hint_generator, &modes[0].args)?;
 
     // Make sure the data is rendered as early as possible to avoid blinking
-    renderer.render(&input_text, &[DrawInstruction::Data])?;
+    renderer.render(&input_page, &[DrawInstruction::Data])?;
 
     info!("Starting the loop");
     loop {
         let draw_instructions = current_mode.get_draw_instructions();
-        renderer.render(&input_text, &draw_instructions)?;
+        renderer.render(&input_page, &draw_instructions)?;
 
         let action = match read() {
             Ok(event) => {
@@ -83,6 +108,11 @@ fn run_main_loop(
         let mode_action = match action {
             Some(Action::Exit) => return Ok("".to_string()),
             Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
+            Some(Action::Resize) => {
+                input_page = get_input_page(&input_text)?;
+                current_mode = create_mode(&input_page, hint_generator, &modes[0].args)?;
+                None
+            }
             None => None,
         };
 
@@ -116,7 +146,8 @@ pub fn run(args: Args) -> Result<String, RunError> {
     // while only using one screen of text but it should be OK for now
     let input_text = get_input_text(&args)?;
 
-    let hint_generator = Box::new(HintPoolGenerator::new(&config.hint_characters));
+    let hint_generator: Box<dyn HintGenerator> =
+        Box::new(HintPoolGenerator::new(&config.hint_characters));
 
     renderer
         .initialize_terminal()
@@ -126,7 +157,7 @@ pub fn run(args: Args) -> Result<String, RunError> {
 
     let ret = run_main_loop(
         input_handler,
-        hint_generator,
+        hint_generator.deref(),
         &config.modes,
         &mut renderer,
         input_text,

@@ -2,8 +2,6 @@
 //!
 //! The idea behind this mode is to allow the user to provide a list
 //! of regexes, and then select part of the text that matches any of them.
-use std::ops::Deref;
-
 use crossterm::style::Color;
 use hint_hit_map::{HintHitMap, Hit};
 use log::{debug, info, trace};
@@ -42,7 +40,7 @@ impl RegexMode {
     pub fn new(
         data: &str,
         args: &configuration::RegexArgs,
-        hint_generator: Box<dyn HintGenerator>,
+        hint_generator: &dyn HintGenerator,
     ) -> Result<Self, RunError> {
         let mut hits = vec![];
 
@@ -94,7 +92,7 @@ impl RegexMode {
                 .for_each(|hit| hits.push(hit));
         }
 
-        let hint_hit_map = HintHitMap::new(hits, hint_generator.deref());
+        let hint_hit_map = HintHitMap::new(hits, hint_generator);
 
         trace!("Constructed hint hit map {:#?}", hint_hit_map);
 

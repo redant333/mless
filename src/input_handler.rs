@@ -29,6 +29,8 @@ pub enum Action {
     Exit,
     /// Forward the given [KeyPress] to the active [crate::modes::Mode].
     ForwardKeyPress(KeyPress),
+    /// Terminal changed size
+    Resize,
 }
 
 impl InputHandler {
@@ -40,6 +42,7 @@ impl InputHandler {
     /// Get the [Action] (if any) resulting from the given input event.
     pub fn get_action(&self, event: Event) -> Option<Action> {
         match event {
+            Event::Resize(_, _) => Some(Action::Resize),
             Event::Key(key) => self.get_key_action(key),
             _ => None,
         }
