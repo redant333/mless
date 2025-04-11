@@ -37,12 +37,12 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
     Ok(renderer)
 }
 
-fn create_mode(
+fn create_mode<'a>(
     input_text: &str,
     hint_generator: &dyn HintGenerator,
-    modes: &[configuration::Mode],
+    modes: &'a [configuration::Mode],
     mode_index: Option<usize>,
-) -> Result<Box<dyn Mode>, RunError> {
+) -> Result<Box<dyn Mode + 'a>, RunError> {
     match mode_index {
         Some(mode_index) => {
             // Make sure that mode_index is within range when calling.
@@ -53,7 +53,7 @@ fn create_mode(
 
             Ok(mode)
         }
-        None => Ok(Box::new(ModeSelectorMode {})),
+        None => Ok(Box::new(ModeSelectorMode::new(modes))),
     }
 }
 
@@ -124,8 +124,8 @@ fn run_main_loop(
                 None
             }
             Some(Action::GoToModeSelection) => {
-                current_mode = Box::new(ModeSelectorMode {});
                 current_mode_index = None;
+                current_mode = create_mode(&input_text, hint_generator, modes, current_mode_index)?;
                 None
             }
             None => None,
