@@ -10,6 +10,11 @@ pub struct Mode {
     /// Mode specific arguments that define this mode.
     #[serde(flatten)]
     pub args: ModeArgs,
+    /// Hotkey to use during mode selection
+    pub hotkey: char,
+    /// Name to use during mode selection
+    #[allow(dead_code)]
+    pub name: String,
 }
 
 /// Arguments that specify the details of the mode.
@@ -70,15 +75,19 @@ mod tests {
     fn regex_mode_can_be_deserialized() {
         let string = "
             mode: regex
+            hotkey: r
+            name: default
             regexes:
                 - regex1
                 - regex2
         ";
 
-        let Mode { args } = serde_yaml::from_str(string).unwrap();
+        let Mode { args, hotkey, name } = serde_yaml::from_str(string).unwrap();
 
         let ModeArgs::RegexMode(regex_args) = args;
 
+        assert_eq!(hotkey, 'r');
+        assert_eq!(name, "default");
         assert_eq!(regex_args.regexes[0].as_str(), "regex1");
         assert_eq!(regex_args.regexes[1].as_str(), "regex2");
     }

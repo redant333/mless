@@ -2,5 +2,6 @@ modes:
   - mode: regex
     description: Select only 'direct_home'
     hotkey: x
+    name: default
     regexes:
       - direct_home

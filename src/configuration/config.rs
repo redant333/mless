@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{collections::HashSet, fs::File};
 
 use super::{modes, DEFAULT_CONFIG_FILE};
 use regex::Regex;
@@ -72,14 +72,22 @@ impl Config {
     {
         let modes = Vec::<modes::Mode>::deserialize(d)?;
 
-        if !modes.is_empty() {
-            return Ok(modes);
+        if modes.is_empty() {
+            return Err(de::Error::invalid_value(
+                Unexpected::Seq,
+                &"at least one mode",
+            ));
         }
 
-        Err(de::Error::invalid_value(
-            Unexpected::Seq,
-            &"at least one mode",
-        ))
+        let hotkeys: HashSet<char> = modes.iter().map(|mode| mode.hotkey).collect();
+        if modes.len() != hotkeys.len() {
+            return Err(de::Error::invalid_value(
+                Unexpected::Seq,
+                &"all hotkeys different",
+            ));
+        }
+
+        Ok(modes)
     }
 
     fn default_modes() -> Vec<modes::Mode> {
@@ -89,6 +97,8 @@ impl Config {
                 #[allow(clippy::unwrap_used)]
                 regexes: vec![Regex::new(r"[\w._\-~/]{4,}").unwrap()],
             }),
+            hotkey: 'r',
+            name: "default".to_string(),
         }]
     }
 }
@@ -129,6 +139,26 @@ mod tests {
     #[test]
     fn modes_deserialization_returns_error_when_empty() {
         let result = serde_yaml::from_str::<Config>("modes: []");
+        result.unwrap_err();
+    }
+
+    #[test]
+    fn modes_deserialization_returns_error_for_repeated_hotkey() {
+        let result = serde_yaml::from_str::<Config>(
+            "
+        modes:
+          - mode: regex
+            hotkey: r
+            regexes:
+              - regex1
+              - regex2
+          - mode: regex
+            hotkey: r
+            regexes:
+              - regex3
+              - regex4
+        ",
+        );
         result.unwrap_err();
     }
 

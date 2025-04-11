@@ -1,5 +1,6 @@
 modes:
   - mode: regex
     hotkey: x
+    name: default
     regexes:
       - x[

@@ -2,5 +2,6 @@ modes:
   - mode: regex
     description: Select only word 'test'
     hotkey: x
+    name: default
     regexes:
       - test

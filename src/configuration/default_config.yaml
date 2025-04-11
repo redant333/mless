@@ -10,6 +10,12 @@ modes:
   # is "regex" which accepts a list of regular expressions
   # and uses them to select the text.
   - mode: regex
+    # This hotkey can be pressed to select this mode during
+    # mode selection. Each mode should have a unique hotkey.
+    hotkey: r
+    # This name will be shown along with the hotkey during
+    # mode selection.
+    name: default
     # The list of regular expressions to use for matching.
     # Note that lookaround is not supported.
     regexes:
