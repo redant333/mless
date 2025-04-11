@@ -16,7 +16,7 @@ use crate::{
     hints::{HintGenerator, HintPoolGenerator},
     input_handler::{Action, InputHandler},
     logging::initialize_logging,
-    modes::{Mode, ModeEvent, RegexMode},
+    modes::{Mode, ModeEvent, ModeSelectorMode, RegexMode},
     pager::get_page,
     rendering::{DrawInstruction, Renderer},
 };
@@ -40,12 +40,21 @@ fn create_renderer() -> Result<Renderer<File>, RunError> {
 fn create_mode(
     input_text: &str,
     hint_generator: &dyn HintGenerator,
-    args: &configuration::ModeArgs,
-) -> Result<RegexMode, RunError> {
-    let ModeArgs::RegexMode(args) = args;
-    let mode = RegexMode::new(input_text, args, hint_generator)?;
+    modes: &[configuration::Mode],
+    mode_index: Option<usize>,
+) -> Result<Box<dyn Mode>, RunError> {
+    match mode_index {
+        Some(mode_index) => {
+            // Make sure that mode_index is within range when calling.
+            // In the current state, this function is only called with either
+            // Some(0) or None, but there could be problems later
+            let ModeArgs::RegexMode(args) = &modes[mode_index].args;
+            let mode = Box::new(RegexMode::new(input_text, args, hint_generator)?);
 
-    Ok(mode)
+            Ok(mode)
+        }
+        None => Ok(Box::new(ModeSelectorMode {})),
+    }
 }
 
 fn get_input_text(args: &Args) -> Result<String, RunError> {
@@ -85,7 +94,8 @@ fn run_main_loop(
     input_text: String,
 ) -> Result<String, RunError> {
     let mut input_page = get_input_page(&input_text)?;
-    let mut current_mode = create_mode(&input_text, hint_generator, &modes[0].args)?;
+    let mut current_mode_index = Some(0);
+    let mut current_mode = create_mode(&input_text, hint_generator, modes, current_mode_index)?;
 
     // Make sure the data is rendered as early as possible to avoid blinking
     renderer.render(&input_page, &[DrawInstruction::Data])?;
@@ -106,11 +116,16 @@ fn run_main_loop(
         debug!("Got input handler action {:?}", action);
 
         let mode_action = match action {
-            Some(Action::Exit) => return Ok("".to_string()),
+            Some(Action::Exit) => Some(ModeEvent::TextSelected("".to_string())),
             Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
             Some(Action::Resize) => {
                 input_page = get_input_page(&input_text)?;
-                current_mode = create_mode(&input_page, hint_generator, &modes[0].args)?;
+                current_mode = create_mode(&input_text, hint_generator, modes, current_mode_index)?;
+                None
+            }
+            Some(Action::GoToModeSelection) => {
+                current_mode = Box::new(ModeSelectorMode {});
+                current_mode_index = None;
                 None
             }
             None => None,

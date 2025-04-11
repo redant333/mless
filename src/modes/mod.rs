@@ -4,6 +4,9 @@ use crate::{input_handler::KeyPress, rendering::DrawInstruction};
 mod regex;
 pub use regex::RegexMode;
 
+mod mode_selector;
+pub use mode_selector::ModeSelectorMode;
+
 /// The trait that defines all selection modes.
 pub trait Mode {
     /// Handle the key press from the user.

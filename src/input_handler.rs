@@ -31,6 +31,8 @@ pub enum Action {
     ForwardKeyPress(KeyPress),
     /// Terminal changed size
     Resize,
+    /// Go to a state where the user can choose to switch the mode
+    GoToModeSelection,
 }
 
 impl InputHandler {
@@ -59,6 +61,10 @@ impl InputHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => Some(Action::Exit),
+            KeyEvent {
+                code: KeyCode::Char(' '),
+                ..
+            } => Some(Action::GoToModeSelection),
             KeyEvent {
                 code: KeyCode::Char(key),
                 ..
