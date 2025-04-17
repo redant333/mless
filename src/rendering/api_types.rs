@@ -50,4 +50,7 @@ pub enum DrawInstruction {
         /// Parts of the data to replace with the given text.
         text_overlays: Vec<DataOverlay>,
     },
+    /// Draw the mode selection dialog where each mode is represented by a tuple
+    /// (mode_hotkey, mode_description).
+    ModeSelectionDialog(Vec<(char, String)>),
 }

@@ -31,14 +31,13 @@ fn get_draw_instructions(
 
     let mode = RegexMode::new(text, &args, hint_generator.deref()).unwrap();
     match mode.get_draw_instructions().into_iter().next().unwrap() {
-        DrawInstruction::Data => {
-            panic!("RegexMode::get_draw_instructions() returned unexpected type")
-        }
-
         DrawInstruction::StyledData {
             styled_segments,
             text_overlays,
         } => (text_overlays, styled_segments),
+        _ => {
+            panic!("RegexMode::get_draw_instructions() returned unexpected type")
+        }
     }
 }
 

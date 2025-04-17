@@ -3,10 +3,10 @@ use std::{collections::VecDeque, io::Write};
 
 use crossterm::{
     cursor::{self, MoveTo},
-    style::{self, Attribute, Print, ResetColor, SetAttribute},
+    style::{self, Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     terminal::{
-        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
-        LeaveAlternateScreen,
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, DisableLineWrap, EnableLineWrap,
+        EnterAlternateScreen, LeaveAlternateScreen,
     },
     QueueableCommand,
 };
@@ -54,6 +54,8 @@ impl<T: Write + ?Sized> Renderer<T> {
             .queue(Clear(ClearType::All))
             .context(IoSnafu {})?
             .queue(MoveTo(0, 0))
+            .context(IoSnafu {})?
+            .queue(EnableLineWrap)
             .context(IoSnafu {})?;
 
         for instruction in draw_instructions {
@@ -65,6 +67,9 @@ impl<T: Write + ?Sized> Renderer<T> {
                     self.draw_styled_data(&mut buffer, data, styled_segments, text_overlays)?;
                 }
                 DrawInstruction::Data => self.draw_styled_data(&mut buffer, data, &[], &[])?,
+                DrawInstruction::ModeSelectionDialog(modes) => {
+                    self.draw_mode_selection_dialog(&mut buffer, modes)?
+                }
             }
         }
 
@@ -144,6 +149,64 @@ impl<T: Write + ?Sized> Renderer<T> {
                 buffer.queue(Print(char)).context(IoSnafu {})?;
             }
         }
+        Ok(())
+    }
+
+    /// Draw the mode selection dialog. The styling of the dialog is completely controled
+    /// by the renderer.
+    fn draw_mode_selection_dialog(
+        &mut self,
+        buffer: &mut Vec<u8>,
+        modes: &[(char, String)],
+    ) -> Result<(), RunError> {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
+        let highlight_color = Color::parse_ansi("5;208").unwrap();
+        let dialog_width: usize = 25;
+        let start_row = 1; // to have a top padding
+
+        let (cols, rows) = terminal::size().context(IoSnafu {})?;
+
+        // If there is not enough space to draw the dialog, just don't
+        if cols <= dialog_width as u16 {
+            return Ok(());
+        }
+
+        let mut modes_iter = modes.iter();
+        // It's important to draw the spaces after the divider to make
+        // sure that any text underneath is not visible.
+        let empty_row = format!("{:dialog_width$}", "│");
+
+        // To make sure that any excess is not going to the new line
+        buffer.queue(DisableLineWrap).context(IoSnafu {})?;
+
+        for row in 0..rows {
+            let start_col = cols - dialog_width as u16;
+
+            // Draw the divider and spaces on
+            buffer
+                .queue(MoveTo(start_col, row))
+                .context(IoSnafu {})?
+                .queue(SetForegroundColor(highlight_color))
+                .context(IoSnafu {})?
+                .queue(Print(&empty_row))
+                .context(IoSnafu {})?;
+
+            if row >= start_row {
+                if let Some((hotkey, name)) = modes_iter.next() {
+                    buffer
+                        .queue(MoveTo(start_col + 1, row))
+                        .context(IoSnafu {})?
+                        .queue(Print(format!(" [{hotkey}] ")))
+                        .context(IoSnafu {})?
+                        .queue(ResetColor)
+                        .context(IoSnafu {})?
+                        .queue(Print(&name))
+                        .context(IoSnafu {})?;
+                }
+            }
+        }
+
+        buffer.queue(EnableLineWrap).context(IoSnafu {})?;
         Ok(())
     }
 

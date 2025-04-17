@@ -1,9 +1,4 @@
-use crossterm::style::Color;
-
-use crate::{
-    configuration,
-    rendering::{DataOverlay, DrawInstruction, StyledSegment, TextStyle},
-};
+use crate::{configuration, rendering::DrawInstruction};
 
 use super::Mode;
 
@@ -27,23 +22,15 @@ impl<'a> Mode for ModeSelectorMode<'a> {
     }
 
     fn get_draw_instructions(&self) -> Vec<DrawInstruction> {
-        let heading = std::iter::once("MODE SELECTION |".to_string());
         let modes = self
             .modes
             .iter()
-            .map(|mode| format!(" [{}] {}", mode.hotkey, mode.name));
-        let text: String = heading.chain(modes).collect();
+            .map(|mode| (mode.hotkey, mode.name.clone()))
+            .collect();
 
-        vec![DrawInstruction::StyledData {
-            styled_segments: vec![StyledSegment {
-                start: 0,
-                length: text.len(),
-                style: TextStyle {
-                    foreground: Color::Black,
-                    background: Color::Yellow,
-                },
-            }],
-            text_overlays: vec![DataOverlay { text, location: 0 }],
-        }]
+        vec![
+            DrawInstruction::Data,
+            DrawInstruction::ModeSelectionDialog(modes),
+        ]
     }
 }
