@@ -27,4 +27,6 @@ pub trait Mode {
 pub enum ModeEvent {
     /// The test selection has finished and resulted in the given string.
     TextSelected(String),
+    /// Switch to another selection mode has been requested.
+    ModeSwitchRequested(usize),
 }

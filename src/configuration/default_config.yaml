@@ -3,8 +3,7 @@
 # hint generation.
 # Defaults to "fdsajkl;weiocmruvnghqpxztyb" if not specified.
 hint_characters: fdsajkl;weiocmruvnghqpxztyb
-# The list of different selection modes. Currently, only
-# the first mode is used.
+# The list of different selection modes.
 modes:
   # The type of the mode. Currently, the only supported type
   # is "regex" which accepts a list of regular expressions

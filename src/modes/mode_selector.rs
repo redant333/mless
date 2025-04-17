@@ -1,6 +1,6 @@
 use crate::{configuration, rendering::DrawInstruction};
 
-use super::Mode;
+use super::{Mode, ModeEvent};
 
 /// A mode that allows the user to change to a different selection mode.
 pub struct ModeSelectorMode<'a> {
@@ -16,9 +16,12 @@ impl<'a> ModeSelectorMode<'a> {
 impl<'a> Mode for ModeSelectorMode<'a> {
     fn handle_key_press(
         &mut self,
-        _key: crate::input_handler::KeyPress,
+        key: crate::input_handler::KeyPress,
     ) -> Option<super::ModeEvent> {
-        None
+        self.modes
+            .iter()
+            .position(|mode| mode.hotkey == key.key)
+            .map(ModeEvent::ModeSwitchRequested)
     }
 
     fn get_draw_instructions(&self) -> Vec<DrawInstruction> {

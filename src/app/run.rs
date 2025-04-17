@@ -6,7 +6,7 @@ use std::{
 };
 
 use crossterm::{event::read, terminal};
-use log::{debug, info};
+use log::{debug, info, warn};
 use snafu::ResultExt;
 
 use crate::{
@@ -133,11 +133,18 @@ fn run_main_loop(
 
         debug!("Got mode action {:?}", mode_action);
 
-        // The enum will get more variants, so make it a match from the start
-        #[allow(clippy::single_match)]
         match mode_action {
             Some(ModeEvent::TextSelected(text)) => {
                 return Ok(text);
+            }
+            Some(ModeEvent::ModeSwitchRequested(mode_index)) => {
+                if modes.get(mode_index).is_some() {
+                    current_mode_index = Some(mode_index);
+                    current_mode =
+                        create_mode(&input_text, hint_generator, modes, current_mode_index)?;
+                } else {
+                    warn!("Trying to switch to a non existing mode with index {mode_index}");
+                }
             }
             None => (),
         }
