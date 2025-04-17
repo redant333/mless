@@ -1,0 +1,11 @@
+modes:
+  - name: aaa
+    mode: regex
+    hotkey: a
+    regexes:
+      - aaa
+  - name: bbb
+    mode: regex
+    hotkey: b
+    regexes:
+      - bbb
