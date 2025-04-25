@@ -2,6 +2,21 @@
 use clap::Parser;
 
 const AFTER_HELP: &str = "
+CONFIGURATION
+
+    The behavior can be customized with a configuration file. The following
+    locations, in this priority, are checked:
+
+     - File specified with --config argument
+     - $XDG_CONFIG_HOME/mless/mless.yaml
+     - $HOME/.config/mless/mless.yaml
+     - $HOME/.mless.yaml
+
+    If none of them can be found, the default values that can be seen by
+    running with --show-default-config are used.
+    If a setting is not present in the config file, the default value is
+    used.
+
 COLORS
 
     Whenever a color needs to be specified in the configuration, the
