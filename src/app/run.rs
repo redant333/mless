@@ -41,16 +41,13 @@ fn create_mode<'a>(
     input_text: &str,
     hint_generator: &dyn HintGenerator,
     config: &'a configuration::Config,
-    mode_index: Option<usize>,
+    mode_args: Option<&ModeArgs>,
 ) -> Result<Box<dyn Mode + 'a>, RunError> {
     let modes = &config.modes;
 
-    match mode_index {
-        Some(mode_index) => {
-            // Make sure that mode_index is within range when calling.
-            // In the current state, this function is only called with either
-            // Some(0) or None, but there could be problems later
-            let ModeArgs::RegexMode(args) = &modes[mode_index].args;
+    match mode_args {
+        Some(mode_args) => {
+            let ModeArgs::RegexMode(args) = mode_args;
             let mode = Box::new(RegexMode::new(input_text, args, hint_generator, config)?);
 
             Ok(mode)
@@ -97,8 +94,8 @@ fn run_main_loop(
 ) -> Result<String, RunError> {
     let modes = &config.modes;
     let mut input_page = get_input_page(&input_text)?;
-    let mut current_mode_index = Some(0);
-    let mut current_mode = create_mode(&input_text, hint_generator, config, current_mode_index)?;
+    let mut current_mode_args = Some(&config.modes[0].args);
+    let mut current_mode = create_mode(&input_text, hint_generator, config, current_mode_args)?;
 
     // Make sure the data is rendered as early as possible to avoid blinking
     renderer.render(&input_page, &[DrawInstruction::Data])?;
@@ -123,14 +120,12 @@ fn run_main_loop(
             Some(Action::ForwardKeyPress(keypress)) => current_mode.handle_key_press(keypress),
             Some(Action::Resize) => {
                 input_page = get_input_page(&input_text)?;
-                current_mode =
-                    create_mode(&input_text, hint_generator, config, current_mode_index)?;
+                current_mode = create_mode(&input_text, hint_generator, config, current_mode_args)?;
                 None
             }
             Some(Action::GoToModeSelection) => {
-                current_mode_index = None;
-                current_mode =
-                    create_mode(&input_text, hint_generator, config, current_mode_index)?;
+                current_mode_args = None;
+                current_mode = create_mode(&input_text, hint_generator, config, current_mode_args)?;
                 None
             }
             None => None,
@@ -144,9 +139,9 @@ fn run_main_loop(
             }
             Some(ModeEvent::ModeSwitchRequested(mode_index)) => {
                 if modes.get(mode_index).is_some() {
-                    current_mode_index = Some(mode_index);
+                    current_mode_args = Some(&config.modes[mode_index].args);
                     current_mode =
-                        create_mode(&input_text, hint_generator, config, current_mode_index)?;
+                        create_mode(&input_text, hint_generator, config, current_mode_args)?;
                 } else {
                     warn!("Trying to switch to a non existing mode with index {mode_index}");
                 }
