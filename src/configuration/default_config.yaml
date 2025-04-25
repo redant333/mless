@@ -1,8 +1,20 @@
 # The characters that will be used to construct the hints.
-# Character at the beginning of the list have priority in
+# Characters at the beginning of the list have priority in
 # hint generation.
-# Defaults to "fdsajkl;weiocmruvnghqpxztyb" if not specified.
 hint_characters: fdsajkl;weiocmruvnghqpxztyb
+
+# Style to use for hints (keys to press to select) displayed
+# during selection.
+# See "COLORS" section in help for details on specifying colors.
+hint_bg: 5;208
+hint_fg: 5;232
+
+# Style to use for highlights (what will be selected when hint
+# keys are pressed) displayed during selection.
+# See "COLORS" section in help for details on specifying colors.
+highlight_bg: 5;232
+highlight_fg: 5;252
+
 # The list of different selection modes.
 modes:
   # The type of the mode. Currently, the only supported type

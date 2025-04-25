@@ -1,6 +1,7 @@
 use std::{collections::HashSet, fs::File};
 
-use super::{modes, DEFAULT_CONFIG_FILE};
+use super::{deserialize_color, modes, DEFAULT_CONFIG_FILE};
+use crossterm::style::Color;
 use regex::Regex;
 use serde::{
     de::{self, Unexpected},
@@ -27,6 +28,27 @@ pub struct Config {
     #[serde(default = "Config::default_hint_characters")]
     #[serde(deserialize_with = "Config::validate_hint_characters")]
     pub hint_characters: String,
+
+    /// Foreground color for hints during selection.
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_hint_fg")]
+    pub hint_fg: Color,
+
+    /// Background color for hints during selection.
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_hint_bg")]
+    pub hint_bg: Color,
+
+    /// Foreground color for highlights during selection.
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_highlight_fg")]
+    pub highlight_fg: Color,
+
+    /// Background color for highlights during selection.
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_highlight_bg")]
+    pub highlight_bg: Color,
+
     /// List of modes that the user can use.
     ///
     /// Note that it is possible to have multiple instances of the same
@@ -100,6 +122,26 @@ impl Config {
             hotkey: 'r',
             name: "default".to_string(),
         }]
+    }
+
+    fn default_hint_fg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;232").unwrap()
+    }
+
+    fn default_hint_bg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;208").unwrap()
+    }
+
+    fn default_highlight_fg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;232").unwrap()
+    }
+
+    fn default_highlight_bg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;252").unwrap()
     }
 }
 

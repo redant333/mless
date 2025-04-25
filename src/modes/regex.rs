@@ -8,6 +8,7 @@ use log::{debug, info, trace};
 use regex::Regex;
 use snafu::ResultExt;
 
+use crate::configuration::Config;
 use crate::error::{InvalidRegexSnafu, RunError};
 use crate::{
     configuration,
@@ -33,6 +34,11 @@ pub struct RegexMode {
     /// This is needed for situations when selecting any hit requires at least
     /// two key presses.
     input_buffer: String,
+
+    hint_fg: Color,
+    hint_bg: Color,
+    highlight_fg: Color,
+    highlight_bg: Color,
 }
 
 impl RegexMode {
@@ -41,6 +47,7 @@ impl RegexMode {
         data: &str,
         args: &configuration::RegexArgs,
         hint_generator: &dyn HintGenerator,
+        config: &Config,
     ) -> Result<Self, RunError> {
         let mut hits = vec![];
 
@@ -99,6 +106,10 @@ impl RegexMode {
         Ok(Self {
             hint_hit_map,
             input_buffer: String::new(),
+            hint_fg: config.hint_fg,
+            hint_bg: config.hint_bg,
+            highlight_fg: config.highlight_fg,
+            highlight_bg: config.highlight_bg,
         })
     }
 }
@@ -129,16 +140,6 @@ impl Mode for RegexMode {
     }
 
     fn get_draw_instructions(&self) -> Vec<DrawInstruction> {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
-        let hint_fg = Color::parse_ansi("5;232").unwrap();
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
-        let hint_bg = Color::parse_ansi("5;208").unwrap();
-
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
-        let highlight_fg = Color::parse_ansi("5;232").unwrap();
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
-        let highlight_bg = Color::parse_ansi("5;252").unwrap();
-
         let mut highlights: Vec<StyledSegment> = self
             .hint_hit_map
             .pairs
@@ -148,8 +149,8 @@ impl Mode for RegexMode {
                 start: hit.start,
                 length: hit.length,
                 style: TextStyle {
-                    foreground: highlight_fg,
-                    background: highlight_bg,
+                    foreground: self.highlight_fg,
+                    background: self.highlight_bg,
                 },
             })
             .collect();
@@ -163,8 +164,8 @@ impl Mode for RegexMode {
                     start: hit.start,
                     length: hint.len(),
                     style: TextStyle {
-                        foreground: hint_fg,
-                        background: hint_bg,
+                        foreground: self.hint_fg,
+                        background: self.hint_bg,
                     },
                 };
 

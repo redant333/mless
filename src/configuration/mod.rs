@@ -8,4 +8,7 @@ pub use modes::Mode;
 pub use modes::ModeArgs;
 pub use modes::RegexArgs;
 
+mod color;
+pub use color::deserialize_color;
+
 pub const DEFAULT_CONFIG_FILE: &str = include_str!("default_config.yaml");

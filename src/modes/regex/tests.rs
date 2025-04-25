@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{configuration::RegexArgs, hints::MockHintGenerator};
+use crate::{
+    configuration::{Config, RegexArgs},
+    hints::MockHintGenerator,
+};
 use test_case::test_case;
 
 use super::*;
@@ -29,7 +32,8 @@ fn get_draw_instructions(
     let mut hint_generator = Box::new(MockHintGenerator::new());
     hint_generator.expect_create_hints().return_const(hints);
 
-    let mode = RegexMode::new(text, &args, hint_generator.deref()).unwrap();
+    let config = Config::default();
+    let mode = RegexMode::new(text, &args, hint_generator.deref(), &config).unwrap();
     match mode.get_draw_instructions().into_iter().next().unwrap() {
         DrawInstruction::StyledData {
             styled_segments,
