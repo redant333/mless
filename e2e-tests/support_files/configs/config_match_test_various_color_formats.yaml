@@ -1,0 +1,11 @@
+hint_bg: red
+hint_fg: 5;166
+highlight_bg: 2;16;32;48
+highlight_fg: black
+modes:
+  - mode: regex
+    description: Select only word 'test'
+    hotkey: x
+    name: default
+    regexes:
+      - test
