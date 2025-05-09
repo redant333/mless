@@ -48,4 +48,8 @@ pub struct Args {
     /// Show the default config with documentation file and exit.
     #[arg(long, action)]
     pub show_default_config: bool,
+
+    /// Start in selection mode with hotkey MODE instead of the first one specified in config
+    #[arg(short = 'm', long = "start-in-mode", value_name = "MODE")]
+    pub start_in_mode: Option<char>,
 }

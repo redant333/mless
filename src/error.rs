@@ -71,4 +71,7 @@ pub enum RunError {
         /// The source error that caused this [RunError].
         source: io::Error,
     },
+
+    #[snafu(display("Invalid mode hotkey {}", mode))]
+    InvalidMode { mode: char },
 }

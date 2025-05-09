@@ -91,10 +91,13 @@ fn run_main_loop(
     config: &configuration::Config,
     renderer: &mut Renderer<File>,
     input_text: String,
+    start_in_mode: Option<&configuration::Mode>,
 ) -> Result<String, RunError> {
     let modes = &config.modes;
     let mut input_page = get_input_page(&input_text)?;
-    let mut current_mode_args = Some(&config.modes[0].args);
+
+    let initial_mode = start_in_mode.unwrap_or(&config.modes[0]);
+    let mut current_mode_args = Some(&initial_mode.args);
     let mut current_mode = create_mode(&input_text, hint_generator, config, current_mode_args)?;
 
     // Make sure the data is rendered as early as possible to avoid blinking
@@ -161,6 +164,19 @@ pub fn run(args: Args) -> Result<String, RunError> {
     };
     let config = load_config(config_path)?;
 
+    let start_in_mode = match args.start_in_mode {
+        Some(mode_hotkey) => {
+            let mode = config.modes.iter().find(|mode| mode.hotkey == mode_hotkey);
+
+            if mode.is_none() {
+                return Err(RunError::InvalidMode { mode: mode_hotkey });
+            }
+
+            mode
+        }
+        None => None,
+    };
+
     let input_handler = InputHandler::from_config(&config);
     let mut renderer = create_renderer()?;
 
@@ -183,6 +199,7 @@ pub fn run(args: Args) -> Result<String, RunError> {
         &config,
         &mut renderer,
         input_text,
+        start_in_mode,
     );
 
     renderer
