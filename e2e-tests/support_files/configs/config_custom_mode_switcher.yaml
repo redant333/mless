@@ -1,0 +1,11 @@
+mode_switch_divider_fg: red
+mode_switch_hotkey_fg: green
+mode_switch_mode_name_fg: blue
+
+modes:
+  - mode: regex
+    description: Select only word 'test'
+    hotkey: x
+    name: default
+    regexes:
+      - test
