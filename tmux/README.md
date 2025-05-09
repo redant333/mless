@@ -29,9 +29,6 @@ setenv -g "<variable name>" "<variable value>"
 ```
 before executing `mless.tmux`.
 
-> [!NOTE]
-> The default keybindings should be changed before the first release.
-
 The full list of all the variables and their defaults:
 
 - `MLESS_PATH`:
