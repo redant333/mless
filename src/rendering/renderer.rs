@@ -3,7 +3,7 @@ use std::{collections::VecDeque, io::Write};
 
 use crossterm::{
     cursor::{self, MoveTo},
-    style::{self, Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
+    style::{self, Attribute, Print, ResetColor, SetAttribute, SetForegroundColor},
     terminal::{
         self, disable_raw_mode, enable_raw_mode, Clear, ClearType, DisableLineWrap, EnableLineWrap,
         EnterAlternateScreen, LeaveAlternateScreen,
@@ -13,8 +13,8 @@ use crossterm::{
 use log::trace;
 use snafu::ResultExt;
 
-use crate::error::IoSnafu;
 use crate::error::RunError;
+use crate::{configuration, error::IoSnafu};
 
 use super::ansi_sequence_extractor::AnsiSequenceExtractor;
 use super::{DataOverlay, StyledSegment, TextStyle};
@@ -39,6 +39,7 @@ impl<T: Write + ?Sized> Renderer<T> {
         &mut self,
         data: &str,
         draw_instructions: &[DrawInstruction],
+        config: &configuration::Config,
     ) -> Result<(), RunError> {
         trace!("Rendering draw instructions {:#?}", draw_instructions);
 
@@ -68,7 +69,7 @@ impl<T: Write + ?Sized> Renderer<T> {
                 }
                 DrawInstruction::Data => self.draw_styled_data(&mut buffer, data, &[], &[])?,
                 DrawInstruction::ModeSelectionDialog(modes) => {
-                    self.draw_mode_selection_dialog(&mut buffer, modes)?
+                    self.draw_mode_selection_dialog(&mut buffer, modes, config)?
                 }
             }
         }
@@ -158,9 +159,8 @@ impl<T: Write + ?Sized> Renderer<T> {
         &mut self,
         buffer: &mut Vec<u8>,
         modes: &[(char, String)],
+        config: &configuration::Config,
     ) -> Result<(), RunError> {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for this literal
-        let highlight_color = Color::parse_ansi("5;208").unwrap();
         let dialog_width: usize = 25;
         let start_row = 1; // to have a top padding
 
@@ -186,7 +186,7 @@ impl<T: Write + ?Sized> Renderer<T> {
             buffer
                 .queue(MoveTo(start_col, row))
                 .context(IoSnafu {})?
-                .queue(SetForegroundColor(highlight_color))
+                .queue(SetForegroundColor(config.mode_switch_divider_fg))
                 .context(IoSnafu {})?
                 .queue(Print(&empty_row))
                 .context(IoSnafu {})?;
@@ -196,9 +196,13 @@ impl<T: Write + ?Sized> Renderer<T> {
                     buffer
                         .queue(MoveTo(start_col + 1, row))
                         .context(IoSnafu {})?
+                        .queue(SetForegroundColor(config.mode_switch_hotkey_fg))
+                        .context(IoSnafu {})?
                         .queue(Print(format!(" [{hotkey}] ")))
                         .context(IoSnafu {})?
                         .queue(ResetColor)
+                        .context(IoSnafu {})?
+                        .queue(SetForegroundColor(config.mode_switch_mode_name_fg))
                         .context(IoSnafu {})?
                         .queue(Print(&name))
                         .context(IoSnafu {})?;

@@ -98,12 +98,12 @@ fn run_main_loop(
     let mut current_mode = create_mode(&input_text, hint_generator, config, current_mode_args)?;
 
     // Make sure the data is rendered as early as possible to avoid blinking
-    renderer.render(&input_page, &[DrawInstruction::Data])?;
+    renderer.render(&input_page, &[DrawInstruction::Data], config)?;
 
     info!("Starting the loop");
     loop {
         let draw_instructions = current_mode.get_draw_instructions();
-        renderer.render(&input_page, &draw_instructions)?;
+        renderer.render(&input_page, &draw_instructions, config)?;
 
         let action = match read() {
             Ok(event) => {

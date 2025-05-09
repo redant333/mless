@@ -49,6 +49,21 @@ pub struct Config {
     #[serde(default = "Config::default_highlight_bg")]
     pub highlight_bg: Color,
 
+    /// Foreground color of the mode switching divider character
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_mode_switch_divider_fg")]
+    pub mode_switch_divider_fg: Color,
+
+    /// Foreground color of mode hotkeys displayed during mode switching
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_mode_switch_hotkey_fg")]
+    pub mode_switch_hotkey_fg: Color,
+
+    /// Foreground color of mode names displayed during mode switching
+    #[serde(deserialize_with = "deserialize_color")]
+    #[serde(default = "Config::default_mode_switch_mode_name_fg")]
+    pub mode_switch_mode_name_fg: Color,
+
     /// List of modes that the user can use.
     ///
     /// Note that it is possible to have multiple instances of the same
@@ -140,6 +155,21 @@ impl Config {
     }
 
     fn default_highlight_bg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;252").unwrap()
+    }
+
+    fn default_mode_switch_divider_fg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;208").unwrap()
+    }
+
+    fn default_mode_switch_hotkey_fg() -> Color {
+        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        Color::parse_ansi("5;208").unwrap()
+    }
+
+    fn default_mode_switch_mode_name_fg() -> Color {
         #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
         Color::parse_ansi("5;252").unwrap()
     }
