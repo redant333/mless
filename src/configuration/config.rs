@@ -21,7 +21,7 @@ pub enum Error {
 /// All of its fields have default values to enable starting without
 /// any config specified and to enable config files to override only
 /// some of the fields.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Config {
     /// Characters that can be used by structs implementing [modes::Mode]
     /// trait.
@@ -243,12 +243,12 @@ mod tests {
     }
 
     #[test]
-    /// This is necessary to allow them to be omitted in the config
-    /// without confusing the user.
-    fn omitted_hint_characters_default_to_the_value_in_default_config() {
+    // This is necessary to make sure that the user can omit some values in their
+    // config and get the default values for the rest
+    fn config_with_default_fields_equal_to_parsed_default_config() {
         let default_config = Config::default();
         let config_with_default_fields = serde_yaml::from_str::<Config>("").unwrap();
 
-        assert!(default_config.hint_characters == config_with_default_fields.hint_characters);
+        assert_eq!(default_config, config_with_default_fields);
     }
 }

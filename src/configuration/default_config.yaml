@@ -11,8 +11,8 @@ hint_fg: 5;232
 
 # Style to use for highlights (what will be selected when hint
 # keys are pressed) displayed during selection.
-highlight_bg: 5;232
-highlight_fg: 5;252
+highlight_bg: 5;252
+highlight_fg: 5;232
 
 # Color to use for the divider used during mode switching
 mode_switch_divider_fg: 5;208

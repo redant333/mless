@@ -5,7 +5,7 @@ use serde::{
 };
 
 /// Structure describing a mode instance in the configuration file.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Mode {
     /// Mode specific arguments that define this mode.
     #[serde(flatten)]
@@ -18,7 +18,7 @@ pub struct Mode {
 }
 
 /// Arguments that specify the details of the mode.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(tag = "mode")]
 pub enum ModeArgs {
     #[serde(rename = "regex")]
@@ -67,9 +67,23 @@ impl RegexArgs {
     }
 }
 
+impl PartialEq for RegexArgs {
+    fn eq(&self, other: &Self) -> bool {
+        if self.regexes.len() != other.regexes.len() {
+            return false;
+        }
+
+        self.regexes
+            .iter()
+            .zip(other.regexes.iter())
+            .all(|(regex1, regex2)| regex1.to_string() == regex2.to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_case::test_case;
 
     #[test]
     fn regex_mode_can_be_deserialized() {
@@ -113,5 +127,20 @@ mod tests {
 
         let result = serde_yaml::from_str::<Mode>(string);
         result.unwrap_err();
+    }
+
+    #[test_case(vec![], vec![], true)]
+    #[test_case(vec![Regex::new(".+").unwrap()], vec![Regex::new(".+").unwrap()], true)]
+    #[test_case(vec![Regex::new(".+").unwrap()], vec![], false)]
+    fn equals_returns_expected_value(
+        regexes1: Vec<Regex>,
+        regexes2: Vec<Regex>,
+        expected_equal: bool,
+    ) {
+        let args1 = RegexArgs { regexes: regexes1 };
+        let args2 = RegexArgs { regexes: regexes2 };
+
+        let equal = args1 == args2;
+        assert_eq!(equal, expected_equal);
     }
 }
