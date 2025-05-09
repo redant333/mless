@@ -161,7 +161,7 @@ impl<T: Write + ?Sized> Renderer<T> {
         modes: &[(char, String)],
         config: &configuration::Config,
     ) -> Result<(), RunError> {
-        let dialog_width: usize = 25;
+        let dialog_width: usize = config.mode_switch_width;
         let start_row = 1; // to have a top padding
 
         let (cols, rows) = terminal::size().context(IoSnafu {})?;

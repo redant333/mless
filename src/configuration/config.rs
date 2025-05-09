@@ -64,6 +64,10 @@ pub struct Config {
     #[serde(default = "Config::default_mode_switch_mode_name_fg")]
     pub mode_switch_mode_name_fg: Color,
 
+    /// Mode switching dialog width including the divider
+    #[serde(default = "Config::default_mode_switch_width")]
+    pub mode_switch_width: usize,
+
     /// List of modes that the user can use.
     ///
     /// Note that it is possible to have multiple instances of the same
@@ -172,6 +176,10 @@ impl Config {
     fn default_mode_switch_mode_name_fg() -> Color {
         #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
         Color::parse_ansi("5;252").unwrap()
+    }
+
+    fn default_mode_switch_width() -> usize {
+        25
     }
 }
 

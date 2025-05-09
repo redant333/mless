@@ -8,6 +8,7 @@
     - Divider color
     - Mode hotkeys' color
     - Mode names' color
+    - Width of the mode switching dialog
 
 # v0.1.0
 First release, no changelog was kept
