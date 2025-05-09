@@ -9,6 +9,7 @@
     - Mode hotkeys' color
     - Mode names' color
     - Width of the mode switching dialog
+- `Feature` It is now possible to specify the mode to start in by providing `-m`/`--start-in-mode` argument
 
 # v0.1.0
 First release, no changelog was kept

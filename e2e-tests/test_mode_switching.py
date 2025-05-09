@@ -2,6 +2,7 @@
 
 import pytest_tuitest as tt
 from utils import config_path
+import pytest
 
 
 @tt.with_stdin("aaa bbb")
@@ -61,3 +62,19 @@ def test_pressing_non_hotkey_does_not_affect_mode_switching(terminal):
     msg = "Mode hints not displayed when expected"
     assert "[a] aaa" in terminal.get_string_at(1, 0, 80), msg
     assert "[b] bbb" in terminal.get_string_at(2, 0, 80), msg
+
+
+@tt.with_stdin("aaa bbb")
+@pytest.mark.parametrize(
+    "tuitest_arguments",
+    [
+        ["-m", "b", "--config", config_path("config_aaa_bbb.yaml")],
+        ["--start-in-mode", "b", "--config", config_path("config_aaa_bbb.yaml")],
+    ],
+    indirect=True,
+)
+def test_setting_initial_mode_from_command_line(terminal):
+    """Verify that it is possible to change the initial mode with -m flag."""
+    terminal.wait_for_stable_output()
+
+    assert terminal.get_background_at(0, 4) != tt.Color16.DEFAULT
