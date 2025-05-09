@@ -51,7 +51,11 @@ def test_can_customize_mode_switching_dialog(terminal):
 
     terminal.wait_for_stable_output()
 
-    divider_column = 55
+    divider_column = 80 - 10
+    assert (
+        terminal.get_string_at(0, divider_column, 1) == "│"
+    ), "Expected to find the divider at the confgiured position"
+
     assert (
         terminal.get_foreground_at(0, divider_column) == RED256
     ), "Expected divider to have the color from the config"

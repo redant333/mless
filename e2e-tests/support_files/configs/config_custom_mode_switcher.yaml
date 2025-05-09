@@ -1,6 +1,7 @@
 mode_switch_divider_fg: red
 mode_switch_hotkey_fg: green
 mode_switch_mode_name_fg: blue
+mode_switch_width: 10
 
 modes:
   - mode: regex
