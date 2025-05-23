@@ -6,7 +6,7 @@ use std::{
 };
 
 use crossterm::{event::read, terminal};
-use log::{debug, info, warn};
+use log::{debug, info, trace, warn};
 use snafu::ResultExt;
 
 use crate::{
@@ -81,6 +81,9 @@ fn get_input_page(input_text: &str) -> Result<String, RunError> {
 
     let mut input_buffer = BufReader::new(input_text.as_bytes());
     let input_page = get_page(&mut input_buffer, rows as usize, cols as usize);
+
+    trace!("Input text: {}", input_text);
+    trace!("Input page: {}", input_page);
 
     Ok(input_page)
 }

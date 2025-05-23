@@ -13,7 +13,6 @@ pub struct Mode {
     /// Hotkey to use during mode selection
     pub hotkey: char,
     /// Name to use during mode selection
-    #[allow(dead_code)]
     pub name: String,
 }
 

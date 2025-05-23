@@ -1,7 +1,7 @@
 use std::{io::BufRead, iter::once};
 
 use log::warn;
-use unicode_width::UnicodeWidthStr;
+use textwrap::core::display_width;
 
 /// Clip the given line so that it fits into the given numbers of rows of the given width.
 /// Note that this takes into account the fact that some characters, e.g. emojis, take up
@@ -22,7 +22,7 @@ fn clip_line(line: &str, rows: usize, row_width: usize) -> (String, usize) {
     for substring_to in substring_ends {
         let slice = &line[current_row_start..substring_to];
 
-        if slice.width() > row_width {
+        if display_width(slice) > row_width {
             current_row_index += 1;
             current_row_start = last_slice_to;
 
@@ -34,13 +34,12 @@ fn clip_line(line: &str, rows: usize, row_width: usize) -> (String, usize) {
         last_slice_to = substring_to;
     }
 
-    // If we didn't mange to full up all the given rows, just return the whole string
+    // If we didn't manage to fill up all the given rows, just return the whole string
     // along with the number of rows we did manage to fill up.
     (line.to_string(), current_row_index + 1)
 }
 
 // Get largest substring from the source that can be rendered in the space of the given size.
-#[allow(dead_code)]
 pub fn get_page(source: &mut dyn BufRead, rows: usize, cols: usize) -> String {
     let mut output_lines = vec![];
     let mut output_rows_remaining = rows;
@@ -102,6 +101,7 @@ mod tests {
     #[test_case("abc😀😀", 1, 4, ("abc", 1); "when_input_contains_emojis_at_the_cut_edge")]
     #[test_case("this is a test", 2, 5, ("this is a ", 2); "when_multiple_rows_requested")]
     #[test_case("abc😀a😀", 2, 4, ("abc😀a", 2); "with_multiple_rows_and_emojis_on_cut_edge")]
+    #[test_case("\x1b[31msome\x1b[0m\ntext", 2, 4, ("\x1b[31msome\x1b[0m\ntext", 2); "when_input_contains_colored_text")]
     fn clip_line_returns_expected_output(
         line: &str,
         rows: usize,
