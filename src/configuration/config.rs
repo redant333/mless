@@ -79,9 +79,10 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        // Can only fail if the config file has unexpected structure.
-        // DEFAULT_CONFIG_FILE is a known static string.
-        #[allow(clippy::unwrap_used)]
+        #[allow(
+            clippy::unwrap_used,
+            reason = "Can only fail if the config file has unexpected structure. DEFAULT_CONFIG_FILE is a known static string."
+        )]
         serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap()
     }
 }
@@ -134,8 +135,10 @@ impl Config {
     fn default_modes() -> Vec<modes::Mode> {
         vec![modes::Mode {
             args: modes::ModeArgs::RegexMode(modes::RegexArgs {
-                // Hardcoded value that is verified to work
-                #[allow(clippy::unwrap_used)]
+                #[allow(
+                    clippy::unwrap_used,
+                    reason = "Hardcoded value that is verified to work"
+                )]
                 regexes: vec![Regex::new(r"[\w._\-~/]{4,}").unwrap()],
             }),
             hotkey: 'r',
@@ -144,37 +147,37 @@ impl Config {
     }
 
     fn default_hint_fg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;232").unwrap()
     }
 
     fn default_hint_bg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;208").unwrap()
     }
 
     fn default_highlight_fg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;232").unwrap()
     }
 
     fn default_highlight_bg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;252").unwrap()
     }
 
     fn default_mode_switch_divider_fg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;208").unwrap()
     }
 
     fn default_mode_switch_hotkey_fg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;208").unwrap()
     }
 
     fn default_mode_switch_mode_name_fg() -> Color {
-        #[allow(clippy::unwrap_used)] // Parsing will always succeed for these literals
+        #[allow(clippy::unwrap_used, reason = "A literal that's known to be parseable")]
         Color::parse_ansi("5;252").unwrap()
     }
 

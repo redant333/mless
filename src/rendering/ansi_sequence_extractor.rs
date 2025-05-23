@@ -28,8 +28,10 @@ impl AnsiSequenceExtractor {
         let ansi_sequences = ansi_regex
             .captures_iter(data)
             .map(|captures| {
-                // Documentation guarantees non-None for 0
-                #[allow(clippy::unwrap_used)]
+                #[allow(
+                    clippy::unwrap_used,
+                    reason = "Documentation guarantees non-None for 0"
+                )]
                 let regex_match = captures.get(0).unwrap();
 
                 info!(

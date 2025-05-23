@@ -58,8 +58,10 @@ impl RegexMode {
         let ignore_ranges = ignore_regex
             .captures_iter(data)
             .map(|captures| {
-                // Documentation guarantees non-None for 0
-                #[allow(clippy::unwrap_used)]
+                #[allow(
+                    clippy::unwrap_used,
+                    reason = "Documentation guarantees non-None for 0"
+                )]
                 let regex_match = captures.get(0).unwrap();
                 (regex_match.start(), regex_match.end())
             })
@@ -74,7 +76,10 @@ impl RegexMode {
                 .captures_iter(&cleaned_data)
                 .filter_map(|capture| {
                     // Documentation guarantees non-None for 0
-                    #[allow(clippy::unwrap_used)]
+                    #[allow(
+                        clippy::unwrap_used,
+                        reason = "Documentation guarantees non-None for 0"
+                    )]
                     let regex_match = capture.get(0).unwrap();
 
                     if regex_match.is_empty() {

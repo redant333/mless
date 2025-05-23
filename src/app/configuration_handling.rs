@@ -34,10 +34,14 @@ fn get_config_from(
     }
 }
 
-// False positive https://github.com/rust-lang/rust-clippy/issues/13574
-#[allow(clippy::needless_match)]
-// Using this to be extra explicit about the priority of configs
-#[allow(clippy::manual_map)]
+#[allow(
+    clippy::needless_match,
+    reason = "False positive https://github.com/rust-lang/rust-clippy/issues/13574"
+)]
+#[allow(
+    clippy::manual_map,
+    reason = "Using this to be extra explicit about the priority of configs"
+)]
 /// Implementation of [get_config_file_location] with additional arguments
 /// to make testing easier. See [get_config_file_location] for details.
 ///
